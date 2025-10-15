@@ -1,12 +1,16 @@
 from functools import partial
-
 from pynput import keyboard
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QGridLayout,
-    QLabel, QPushButton, QLineEdit, QSpinBox, QGroupBox, QFrame
+    QLabel, QPushButton, QLineEdit, QSpinBox, QGroupBox, QFrame, QSizePolicy
 )
+from core.manager.data_manager import data_manager
+from core.manager.key_map import KeyMap, KeyState
+from timer_config import TimerConfig
+
+
 
 class EditWindow(QDialog):
     def __init__(self, title='編輯計時器', parent=None):
@@ -76,7 +80,7 @@ class EditWindow(QDialog):
         confirm_btn = QPushButton("確認")
         confirm_btn.setFixedSize(100, 50)
         confirm_btn.setStyleSheet(self._button_style())
-        confirm_btn.clicked.connect(self.accept)
+        confirm_btn.clicked.connect(self.on_confirm)
 
         cancel_btn = QPushButton("取消")
         cancel_btn.setFixedSize(100, 50)
@@ -110,16 +114,16 @@ class EditWindow(QDialog):
             col = i % 3
 
             record_btn = QPushButton(record_btn_label[i])
-            record_btn.setSizePolicy(QPushButton().sizePolicy())
+            record_btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
             record_btn.clicked.connect(partial(self.start_recording, i))
 
             label = QLabel("None")
             label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            label.setSizePolicy(QLabel().sizePolicy())
+            label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
             self.key_labels.append(label)
 
             clear_btn = QPushButton("清除")
-            clear_btn.setSizePolicy(QPushButton().sizePolicy())
+            clear_btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
             clear_btn.clicked.connect(partial(self.remove, i))
 
             layout.addWidget(record_btn, 0, col)
@@ -149,6 +153,9 @@ class EditWindow(QDialog):
         # 若已有監聽器，先停止
         if self.listener:
             self.listener.stop()
+            for i in range(len(self.key_labels)):
+                if i != index and self.key_labels[i].text() == '錄製中...':
+                    self.key_labels[i].setText("None")
 
         # 啟動新的監聽器
         self.listener = keyboard.Listener(on_press=self.on_key_detected)
@@ -175,3 +182,36 @@ class EditWindow(QDialog):
         print("recording_index=", self.recording_index)
         self.key_labels[index].setText("None")
         print("key_label=", self.key_labels[index].text())
+
+    def on_confirm(self):
+        config = TimerConfig(
+            event_name=self.event_name_input.text(),
+            limit_time=self.limit_time_input.value(),
+            duration=self.duration_input.value(),
+            keymap=self.collect_keymap()
+        )
+        data_manager.save_timer(config)
+        self.accept()
+
+    def collect_keymap(self) -> KeyMap:
+        role_map = {
+            0: KeyState.SELECT,
+            1: KeyState.LOCK,
+            2: KeyState.ACTIVE,
+            3: KeyState.SELECT2,
+            4: KeyState.LOCK2,
+            5: KeyState.ACTIVE2
+        }
+
+        keys = {}
+        for i, label in enumerate(self.key_labels):
+            key = label.text()
+            if key != "None":
+                keys[role_map[i]] = key
+        return KeyMap(keys=keys)
+
+# if __name__ == "__main__":
+#     app = QApplication(sys.argv)
+#     window = EditWindow()
+#     window.show()
+#     sys.exit(app.exec())

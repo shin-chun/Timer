@@ -1,14 +1,15 @@
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QGridLayout, QPushButton,
-    QSizePolicy, QListWidget, QHBoxLayout, QLabel
+    QMainWindow, QWidget, QVBoxLayout, QGridLayout, QHBoxLayout,
+    QPushButton, QListWidget, QListWidgetItem, QLabel, QSizePolicy
 )
+from PySide6.QtGui import QFont
+from PySide6.QtCore import Qt
+from core.manager.data_manager import data_manager
+from core.gui.edit_window import EditWindow
+from core.manager.key_map import KeyMap, KeyState
+from timer_config import TimerConfig
 
-from gui.edit_window import EditWindow
-
-
-class MainWindow(QWidget):
+class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("ElswordTimer")
@@ -44,21 +45,26 @@ class MainWindow(QWidget):
         font.setBold(True)
 
         # 初始化 UI 元件
+        self.timer_list = QListWidget()
+        self.timer_list.setFont(font)
+
         grid_layout = self.init_buttons(font)
-        list_widget = self.init_list_widget(font)
         bottom_button_layout = self.init_bottom_button(font)
         label = self.init_label(font)
 
-        # 主 layout
-        main_layout = QVBoxLayout()
+        # 主 layout 包裝成 central widget
+        central_widget = QWidget()
+        main_layout = QVBoxLayout(central_widget)
         main_layout.setSpacing(15)
         main_layout.setContentsMargins(20, 20, 20, 20)
         main_layout.addLayout(grid_layout)
-        main_layout.addWidget(list_widget)
+        main_layout.addWidget(self.timer_list)
         main_layout.addLayout(bottom_button_layout)
         main_layout.addWidget(label)
 
-        self.setLayout(main_layout)
+        self.setCentralWidget(central_widget)
+        data_manager.subscribe(self.on_timer_updated)
+        self.refresh_timer_list()
 
     def init_buttons(self, font):
         grid_layout = QGridLayout()
@@ -73,16 +79,11 @@ class MainWindow(QWidget):
             btn = QPushButton(label)
             btn.setFont(font)
             btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-            btn.clicked.connect(lambda _, idx=i: self.handle_button_click(idx))  # 綁定事件
+            btn.clicked.connect(lambda _, idx=i: self.handle_button_click(idx))
             self.buttons.append(btn)
             grid_layout.addWidget(btn, i // 3, i % 3)
 
         return grid_layout
-
-    def init_list_widget(self, font):
-        list_widget = QListWidget()
-        list_widget.setFont(font)
-        return list_widget
 
     def init_bottom_button(self, font):
         bottom_button = QPushButton("啟動計時器")
@@ -118,7 +119,7 @@ class MainWindow(QWidget):
 
     def create_timer(self):
         edit_window = EditWindow(parent=self)
-        edit_window.exec()  # 使用模態視窗，資料由內部管理
+        edit_window.exec()
 
     def edit_timer(self):
         print("編輯計時器")
@@ -134,3 +135,33 @@ class MainWindow(QWidget):
 
     def import_config(self):
         print("匯入設定檔")
+
+
+    def on_timer_updated(self, config: TimerConfig):
+        self.refresh_timer_list()
+
+    def refresh_timer_list(self):
+        self.timer_list.clear()
+        for config in data_manager.get_all_timers():
+            keymap: KeyMap = config.keymap
+            keys = keymap.keys  # Dict[KeyState, str]
+
+            select_key = keys.get(KeyState.SELECT, "未設定")
+            lock_key = keys.get(KeyState.LOCK, "未設定")
+            active_key = keys.get(KeyState.ACTIVE, "未設定")
+
+            sub_select_key = keys.get(KeyState.SELECT2, "未設定")
+            sub_lock_key = keys.get(KeyState.LOCK2, "未設定")
+            sub_active_key = keys.get(KeyState.ACTIVE2, "未設定")
+
+            text = (
+                f"{config.event_name} - {config.duration}s | "
+                f"主鍵位：{select_key} -> {lock_key} -> {active_key} | "
+                f"副鍵位：{sub_select_key} -> {sub_lock_key} -> {sub_active_key}"
+            )
+
+            item = QListWidgetItem(text)
+            item.setData(Qt.ItemDataRole.UserRole, config)
+            self.timer_list.addItem(item)
+
+
