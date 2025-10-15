@@ -156,8 +156,8 @@ class MainWindow(QMainWindow):
 
             text = (
                 f"{config.event_name} - {config.duration}s | "
-                f"主鍵位：{select_key} -> {lock_key} -> {active_key} | "
-                f"副鍵位：{sub_select_key} -> {sub_lock_key} -> {sub_active_key}"
+                f"主鍵位：🔴{select_key} -> {lock_key} -> {active_key} | "
+                f"副鍵位：🟡 {sub_select_key} -> {sub_lock_key} -> {sub_active_key}"
             )
 
             item = QListWidgetItem(text)

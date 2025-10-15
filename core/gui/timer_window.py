@@ -1,6 +1,8 @@
+import sys
+
 from PySide6.QtCore import Qt, QPoint
 from PySide6.QtGui import QFont, QFontMetrics
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QSizePolicy
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QSizePolicy, QApplication
 from enum import Enum
 
 class CooldownState(Enum):
@@ -16,7 +18,7 @@ STATE_COLOR_MAP = {
     CooldownState.TRIGGERED: "gray"
 }
 
-class CooldownWindow(QWidget):
+class TimerWindow(QWidget):
     def __init__(self, name: str, cooldown_seconds: int):
         super().__init__()
         self.name = name
@@ -76,3 +78,14 @@ class CooldownWindow(QWidget):
         if event.button() == Qt.MouseButton.LeftButton:
             self._dragging = False
             event.accept()
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+
+    # 建立一個測試用 TimerWindow
+    window = TimerWindow(name="測試", cooldown_seconds=10)
+    window.set_state(CooldownState.IDLE)
+    window.set_remaining(10)
+    window.show()
+
+    sys.exit(app.exec())

@@ -1,10 +1,11 @@
+import sys
 from functools import partial
 from pynput import keyboard
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QGridLayout,
-    QLabel, QPushButton, QLineEdit, QSpinBox, QGroupBox, QFrame, QSizePolicy
+    QLabel, QPushButton, QLineEdit, QSpinBox, QGroupBox, QFrame, QSizePolicy, QApplication
 )
 from core.manager.data_manager import data_manager
 from core.manager.key_map import KeyMap, KeyState
@@ -210,8 +211,8 @@ class EditWindow(QDialog):
                 keys[role_map[i]] = key
         return KeyMap(keys=keys)
 
-# if __name__ == "__main__":
-#     app = QApplication(sys.argv)
-#     window = EditWindow()
-#     window.show()
-#     sys.exit(app.exec())
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = EditWindow()
+    window.show()
+    sys.exit(app.exec())

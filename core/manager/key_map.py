@@ -2,6 +2,8 @@
 from dataclasses import dataclass, field
 from typing import Optional, Dict
 from enum import Enum
+from core.gui.timer_window import CooldownState
+
 
 
 class KeyState(Enum):
@@ -23,3 +25,11 @@ class KeyMap:
 
     def to_dict(self) -> Dict[str, str]:
         return {state.value: key for state, key in self.keys.items()}
+
+    KEYSTATE_TO_COOLDOWN = {
+        KeyState.IDLE: CooldownState.IDLE,
+        KeyState.SELECT: CooldownState.SELECTED,
+        KeyState.LOCK: CooldownState.LOCKED,
+        KeyState.ACTIVE: CooldownState.TRIGGERED,
+        # 其他對應視需求補上
+    }

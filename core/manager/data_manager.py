@@ -10,6 +10,7 @@ class DataManager:
 
     def save_timer(self, config: TimerConfig):
         self._timers.append(config)
+        print(self._timers)
         self._notify_subscribers(config)
 
     def get_all_timers(self):
