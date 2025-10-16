@@ -2,7 +2,7 @@ import sys
 
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QGridLayout, QHBoxLayout,
-    QPushButton, QListWidget, QListWidgetItem, QLabel, QSizePolicy, QApplication, QDialog
+    QPushButton, QListWidget, QListWidgetItem, QLabel, QSizePolicy, QApplication, QDialog, QFileDialog
 )
 from PySide6.QtGui import QFont
 from PySide6.QtCore import Qt
@@ -67,6 +67,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
         data_manager.subscribe(self.on_timer_updated)
         self.refresh_timer_list()
+        self.timer_list.itemDoubleClicked.connect(self.edit_timer_from_item)
 
     def init_buttons(self, font):
         grid_layout = QGridLayout()
@@ -124,11 +125,40 @@ class MainWindow(QMainWindow):
         if edit_window.exec() == QDialog.accepted:
             self.refresh_timer_list()
 
-    def edit_timer(self):
-        print("編輯計時器")
+    def edit_timer(self, config: TimerConfig = None):
+        if config is None:
+            selected_items = self.timer_list.selectedItems()
+            if not selected_items:
+                print("請先選擇要編輯的計時器")
+                return
+            config = selected_items[0].data(Qt.ItemDataRole.UserRole)
+
+        edit_window = EditWindow(parent=self, config=config)
+        if edit_window.exec() == QDialog.accepted:
+            self.refresh_timer_list()
+
+    # def edit_timer(self, config: TimerConfig = None):
+    #     if config is None:
+    #         selected_items = self.timer_list.selectedItems()
+    #         if not selected_items:
+    #             return
+    #         config = selected_items[0].data(Qt.ItemDataRole.UserRole)
+    #
+    #     edit_window = EditWindow(parent=self)
+    #     data_manager.request_config_load(config)
+    #     if edit_window.exec() == QDialog.accepted:
+    #         self.refresh_timer_list()
+
+
+    def edit_timer_from_item(self, item: QListWidgetItem):
+        config = item.data(Qt.ItemDataRole.UserRole)
+        self.edit_timer(config)
 
     def save_file(self):
-        print("儲存檔案")
+        filepath, _ = QFileDialog.getSaveFileName(self, "儲存設定檔", "timers.json", "JSON Files (*.json)")
+        if filepath:
+            data_manager.save_to_file(filepath)
+            print(f"已儲存到 {filepath}")
 
     def delete_timer(self):
         print("刪除計時器")
@@ -137,7 +167,11 @@ class MainWindow(QMainWindow):
         print("重置計時器")
 
     def import_config(self):
-        print("匯入設定檔")
+        filepath, _ = QFileDialog.getOpenFileName(self, "匯入設定檔", "", "JSON Files (*.json)")
+        if filepath:
+            data_manager.load_from_file(filepath)
+            self.refresh_timer_list()
+            print(f"已匯入設定檔：{filepath}")
 
 
     def on_timer_updated(self, config: TimerConfig):

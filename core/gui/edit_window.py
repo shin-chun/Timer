@@ -12,8 +12,26 @@ from core.manager.edit_window_manager import EditWindowManager
 from model.timer_factory import KeyMap, KeyState, TimerConfig, KeyGroup
 
 
+# class EditWindow(QDialog):
+#     def __init__(self, title='編輯計時器', parent=None):
+#         super().__init__(parent)
+#         self.setWindowTitle(title)
+#         self.setMinimumSize(700, 350)
+#
+#         self.event_name_input = QLineEdit()
+#         self.limit_time_input = QSpinBox()
+#         self.duration_input = QSpinBox()
+#         self.key_labels = []
+#
+#         self._setup_ui()
+#         self.recording_index = None
+#         self.edit_manager = EditWindowManager(self.update_key_label)
+#
+#         data_manager.subscribe("load_config", self.load_config)
+
+
 class EditWindow(QDialog):
-    def __init__(self, title='編輯計時器', parent=None):
+    def __init__(self, title='編輯計時器', config: TimerConfig = None, parent=None):
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setMinimumSize(700, 350)
@@ -26,7 +44,9 @@ class EditWindow(QDialog):
         self._setup_ui()
         self.recording_index = None
         self.edit_manager = EditWindowManager(self.update_key_label)
-
+        # data_manager.subscribe(self.load_config(config))
+        if config:
+            self.load_config(config)
 
     def _setup_ui(self):
         main_layout = QVBoxLayout()
@@ -204,6 +224,18 @@ class EditWindow(QDialog):
 
         group = KeyGroup(select_key=select_key, members=members)
         return KeyMap(groups={group_id: group})
+
+    def load_config(self, config: TimerConfig):
+        self.event_name_input.setText(config.event_name)
+        self.limit_time_input.setValue(config.limit_time)
+        self.duration_input.setValue(config.duration)
+        self.load_keymap(config.keymap)
+
+    def load_keymap(self, keymap: KeyMap):
+        print(keymap.to_dict())
+        print(type(keymap.to_dict()))
+
+        pass
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
