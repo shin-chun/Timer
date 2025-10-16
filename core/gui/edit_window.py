@@ -1,8 +1,6 @@
 import sys
 from functools import partial
 from typing import Dict, Optional
-
-from pynput import keyboard
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
@@ -10,6 +8,7 @@ from PySide6.QtWidgets import (
     QLabel, QPushButton, QLineEdit, QSpinBox, QGroupBox, QFrame, QSizePolicy, QApplication
 )
 from core.manager.data_manager import data_manager
+from core.manager.edit_window_manager import EditWindowManager
 from model.timer_factory import KeyMap, KeyState, TimerConfig, KeyGroup
 
 
@@ -25,9 +24,9 @@ class EditWindow(QDialog):
         self.key_labels = []
 
         self._setup_ui()
-
         self.recording_index = None
-        self.listener = None
+        self.edit_manager = EditWindowManager(self.update_key_label)
+
 
     def _setup_ui(self):
         main_layout = QVBoxLayout()
@@ -81,7 +80,7 @@ class EditWindow(QDialog):
         confirm_btn = QPushButton("確認")
         confirm_btn.setFixedSize(100, 50)
         confirm_btn.setStyleSheet(self._button_style())
-        confirm_btn.clicked.connect(self.on_confirm)
+        confirm_btn.clicked.connect(self._on_confirm)
 
         cancel_btn = QPushButton("取消")
         cancel_btn.setFixedSize(100, 50)
@@ -116,7 +115,7 @@ class EditWindow(QDialog):
 
             record_btn = QPushButton(record_btn_label[i])
             record_btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-            record_btn.clicked.connect(partial(self.start_recording, i))
+            record_btn.clicked.connect(partial(self._start_recording, i))
 
             label = QLabel("None")
             label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -147,57 +146,35 @@ class EditWindow(QDialog):
         """
     def _start_recording(self, index):
         self.recording_index = index
-        self
+        self.key_labels[index].setText('錄製中...')
 
-    def start_recording(self, index):
-        # 設定錄製狀態
-        self.recording_index = index
-        self.key_labels[index].setText("錄製中...")
+        for i in range(len(self.key_labels)):
+            if i != index and self.key_labels[i].text() == '錄製中...':
+                self.key_labels[i].setText('None')
 
-        # 若已有監聽器，先停止
-        if self.listener:
-            self.listener.stop()
-            for i in range(len(self.key_labels)):
-                if i != index and self.key_labels[i].text() == '錄製中...':
-                    self.key_labels[i].setText("None")
+        self.edit_manager.on_recording(index)
 
-        # 啟動新的監聽器
-        self.listener = keyboard.Listener(on_press=self.on_key_detected)
-        self.listener.start()
-
-    def on_key_detected(self, key):
-        try:
-            key_name = key.char if hasattr(key, 'char') else str(key)
-        except Exception:
-            key_name = str(key)
-
+    def update_key_label(self, key_name):
         # 更新 Label 顯示
         if self.recording_index is not None:
             self.key_labels[self.recording_index].setText(key_name)
             self.recording_index = None
 
-        # 停止監聽
-        if self.listener:
-            self.listener.stop()
-            self.listener = None
-
     def remove(self, index):
         self.recording_index = index
-        print("recording_index=", self.recording_index)
         self.key_labels[index].setText("None")
-        print("key_label=", self.key_labels[index].text())
 
-    def on_confirm(self):
+    def _on_confirm(self):
         config = TimerConfig(
             event_name=self.event_name_input.text(),
             limit_time=self.limit_time_input.value(),
             duration=self.duration_input.value(),
-            keymap=self.collect_keymap()
+            keymap=self._collect_keymap()
         )
         data_manager.save_timer(config)
         self.accept()
 
-    def collect_keymap(self) -> KeyMap:
+    def _collect_keymap(self) -> KeyMap:
         role_map = {
             0: KeyState.SELECT,
             1: KeyState.LOCK,
