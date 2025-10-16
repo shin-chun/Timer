@@ -1,13 +1,15 @@
+import sys
+
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QGridLayout, QHBoxLayout,
-    QPushButton, QListWidget, QListWidgetItem, QLabel, QSizePolicy
+    QPushButton, QListWidget, QListWidgetItem, QLabel, QSizePolicy, QApplication, QDialog
 )
 from PySide6.QtGui import QFont
 from PySide6.QtCore import Qt
 from core.manager.data_manager import data_manager
 from core.gui.edit_window import EditWindow
-from core.manager.key_map import KeyMap, KeyState
-from timer_config import TimerConfig
+from model.timer_factory import KeyMap, KeyState, TimerConfig, KeyGroup
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -119,7 +121,8 @@ class MainWindow(QMainWindow):
 
     def create_timer(self):
         edit_window = EditWindow(parent=self)
-        edit_window.exec()
+        if edit_window.exec() == QDialog.accepted:
+            self.refresh_timer_list()
 
     def edit_timer(self):
         print("編輯計時器")
@@ -142,26 +145,29 @@ class MainWindow(QMainWindow):
 
     def refresh_timer_list(self):
         self.timer_list.clear()
+
         for config in data_manager.get_all_timers():
-            keymap: KeyMap = config.keymap
-            keys = keymap.keys  # Dict[KeyState, str]
+            for group_id, group in config.keymap.groups.items():
+                select_key = group.select_key or "未設定"
+                lock_key = group.members.get(KeyState.LOCK, "未設定")
+                active_key = group.members.get(KeyState.ACTIVE, "未設定")
+                sub_active_key1 = group.members.get(KeyState.SUB_ACTIVE1, "未設定")
+                sub_active_key2 = group.members.get(KeyState.SUB_ACTIVE2, "未設定")
+                sub_active_key3 = group.members.get(KeyState.SUB_ACTIVE3, "未設定")
 
-            select_key = keys.get(KeyState.SELECT, "未設定")
-            lock_key = keys.get(KeyState.LOCK, "未設定")
-            active_key = keys.get(KeyState.ACTIVE, "未設定")
+                text = (
+                    f"{config.event_name} - {config.duration}s | "
+                    f"🔴主鍵位：{select_key} -> {lock_key} -> {active_key} | "
+                    f"🟡 副鍵位：{sub_active_key1} - {sub_active_key2} - {sub_active_key3}"
+                )
 
-            sub_select_key = keys.get(KeyState.SELECT2, "未設定")
-            sub_lock_key = keys.get(KeyState.LOCK2, "未設定")
-            sub_active_key = keys.get(KeyState.ACTIVE2, "未設定")
+                item = QListWidgetItem(text)
+                item.setData(Qt.ItemDataRole.UserRole, config)
+                self.timer_list.addItem(item)
 
-            text = (
-                f"{config.event_name} - {config.duration}s | "
-                f"主鍵位：🔴{select_key} -> {lock_key} -> {active_key} | "
-                f"副鍵位：🟡 {sub_select_key} -> {sub_lock_key} -> {sub_active_key}"
-            )
-
-            item = QListWidgetItem(text)
-            item.setData(Qt.ItemDataRole.UserRole, config)
-            self.timer_list.addItem(item)
-
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec())
 

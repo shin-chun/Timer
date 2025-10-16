@@ -1,5 +1,7 @@
 import sys
 from functools import partial
+from typing import Dict, Optional
+
 from pynput import keyboard
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
@@ -8,9 +10,7 @@ from PySide6.QtWidgets import (
     QLabel, QPushButton, QLineEdit, QSpinBox, QGroupBox, QFrame, QSizePolicy, QApplication
 )
 from core.manager.data_manager import data_manager
-from core.manager.key_map import KeyMap, KeyState
-from timer_config import TimerConfig
-
+from model.timer_factory import KeyMap, KeyState, TimerConfig, KeyGroup
 
 
 class EditWindow(QDialog):
@@ -97,7 +97,7 @@ class EditWindow(QDialog):
         self.setLayout(main_layout)
 
     def _create_key_group(self, title, indices):
-        record_btn_label = ['選擇鍵', '鎖定鍵', '觸發鍵', '選擇鍵2', '鎖定鍵2', '觸發鍵2']
+        record_btn_label = ['選擇鍵', '鎖定鍵', '觸發鍵', '子觸發1', '子觸發2', '子觸發3']
         group_box = QGroupBox(title)
         group_box.setStyleSheet("""
             QGroupBox {
@@ -145,6 +145,9 @@ class EditWindow(QDialog):
                 background-color: #2196F3;
             }
         """
+    def _start_recording(self, index):
+        self.recording_index = index
+        self
 
     def start_recording(self, index):
         # 設定錄製狀態
@@ -199,17 +202,31 @@ class EditWindow(QDialog):
             0: KeyState.SELECT,
             1: KeyState.LOCK,
             2: KeyState.ACTIVE,
-            3: KeyState.SELECT2,
-            4: KeyState.LOCK2,
-            5: KeyState.ACTIVE2
+            3: KeyState.SUB_ACTIVE1,
+            4: KeyState.SUB_ACTIVE2,
+            5: KeyState.SUB_ACTIVE3
         }
 
-        keys = {}
+        members: Dict[KeyState, str] = {}
+        select_key: Optional[str] = None
+
         for i, label in enumerate(self.key_labels):
             key = label.text()
-            if key != "None":
-                keys[role_map[i]] = key
-        return KeyMap(keys=keys)
+            if key and key != "None":
+                state = role_map[i]
+                members[state] = key
+                if state == KeyState.SELECT:
+                    select_key = key
+
+        if not select_key:
+            # 若沒有 SELECT，視為單鍵觸發，使用事件名稱作為 group_id
+            group_id = self.event_name_input.text().strip() or "default"
+            select_key = "__single__"
+        else:
+            group_id = select_key
+
+        group = KeyGroup(select_key=select_key, members=members)
+        return KeyMap(groups={group_id: group})
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
