@@ -1,58 +1,50 @@
-# manager/data_manager.py
 import json
 from typing import Callable, List, Dict, Optional
-from model.timer_factory import TimerConfig
-# class DataManager:
-#     def __init__(self):
-#         self._subscribers = {
-#             "load_config": []
-#         }
-#
-#     def subscribe(self, event_type: str, callback):
-#         self._subscribers[event_type].append(callback)
-#
-#     def notify(self, event_type: str, payload=None):
-#         for callback in self._subscribers.get(event_type, []):
-#             callback(payload)
-#
-#     def request_config_load(self, config: TimerConfig):
-#         self.notify("load_config", config)
 
 class DataManager:
     def __init__(self):
-        self._timers = []
-        self._subscribers: list[Callable[[TimerConfig], None]] = []
+        self._raw_inputs: List[Dict] = []
+        self._subscribers: List[Callable[[Dict], None]] = []
 
-    def save_timer(self, config: TimerConfig):
-        self._timers.append(config)
-        print(f'資料已儲存為：{self._timers}')
-        self._notify_subscribers(config)
+    def save_raw_input(self, raw: Dict):
+        self._raw_inputs.append(raw)
+        print(f'原始資料已儲存：{self._raw_inputs}')
+        self._notify_subscribers(raw)
 
-    def get_all_timers(self):
-        return self._timers
+    def get_all_raw_inputs(self) -> List[Dict]:
+        return self._raw_inputs
 
-    def subscribe(self, callback: Callable[[TimerConfig], None]):
+    def subscribe(self, callback: Callable[[Dict], None]):
         self._subscribers.append(callback)
 
-    def _notify_subscribers(self, timer_data: TimerConfig):
+    def _notify_subscribers(self, raw: Dict):
         for callback in self._subscribers:
-            callback(timer_data)
+            callback(raw)
 
     def save_to_file(self, filepath: str):
-        data = [config.to_dict() for config in self._timers]
         with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
+            json.dump(self._raw_inputs, f, ensure_ascii=False, indent=4)
 
     def load_from_file(self, filepath: str):
         with open(filepath, 'r', encoding='utf-8') as f:
             raw_data = json.load(f)
-        self._timers.clear()
+        self._raw_inputs.clear()
         for item in raw_data:
-            config = TimerConfig.from_dict(item)
-            self._timers.append(config)
-            self._notify_subscribers(config)
-        print(f'資料已匯入為：{self._timers}')
+            self._raw_inputs.append(item)
+            self._notify_subscribers(item)
+        print(f'原始資料已匯入：{self._raw_inputs}')
 
+    def get_ui_snapshot(self, raw: Dict) -> Dict:
+        return {
+            "事件名稱": raw.get("event_name", ""),
+            "持續時間": f'{raw.get("duration", 0)} 秒',
+            "限制時間": f'{raw.get("limit_time", 0)} 秒',
+            "鍵位配置": [
+                {"索引": i, "鍵名": key}
+                for i, key in enumerate(raw.get("key_labels", []))
+                if key and key != "None"
+            ]
+        }
 
 # 單例模式（可選）
 data_manager = DataManager()

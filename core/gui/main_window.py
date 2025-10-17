@@ -125,34 +125,22 @@ class MainWindow(QMainWindow):
         if edit_window.exec() == QDialog.accepted:
             self.refresh_timer_list()
 
-    def edit_timer(self, config: TimerConfig = None):
-        if config is None:
+    def edit_timer(self, raw: dict = None):
+        if raw is None:
             selected_items = self.timer_list.selectedItems()
             if not selected_items:
                 print("請先選擇要編輯的計時器")
                 return
-            config = selected_items[0].data(Qt.ItemDataRole.UserRole)
+            raw = selected_items[0].data(Qt.ItemDataRole.UserRole)
 
-        edit_window = EditWindow(parent=self, config=config)
+        edit_window = EditWindow(parent=self)
+        edit_window.load_raw_input(raw)
         if edit_window.exec() == QDialog.accepted:
             self.refresh_timer_list()
 
-    # def edit_timer(self, config: TimerConfig = None):
-    #     if config is None:
-    #         selected_items = self.timer_list.selectedItems()
-    #         if not selected_items:
-    #             return
-    #         config = selected_items[0].data(Qt.ItemDataRole.UserRole)
-    #
-    #     edit_window = EditWindow(parent=self)
-    #     data_manager.request_config_load(config)
-    #     if edit_window.exec() == QDialog.accepted:
-    #         self.refresh_timer_list()
-
-
     def edit_timer_from_item(self, item: QListWidgetItem):
-        config = item.data(Qt.ItemDataRole.UserRole)
-        self.edit_timer(config)
+        raw = item.data(Qt.ItemDataRole.UserRole)
+        self.edit_timer(raw)
 
     def save_file(self):
         filepath, _ = QFileDialog.getSaveFileName(self, "儲存設定檔", "timers.json", "JSON Files (*.json)")
@@ -173,31 +161,30 @@ class MainWindow(QMainWindow):
             self.refresh_timer_list()
             print(f"已匯入設定檔：{filepath}")
 
-
-    def on_timer_updated(self, config: TimerConfig):
+    def on_timer_updated(self, raw: dict):
         self.refresh_timer_list()
 
     def refresh_timer_list(self):
         self.timer_list.clear()
+        for raw in data_manager.get_all_raw_inputs():
+            snapshot = data_manager.get_ui_snapshot(raw)
+            event = snapshot["事件名稱"]
+            duration = snapshot["持續時間"]
+            keys = snapshot["鍵位配置"]
 
-        for config in data_manager.get_all_timers():
-            for group_id, group in config.keymap.groups.items():
-                select_key = group.select_key or "未設定"
-                lock_key = group.members.get(KeyState.LOCK, "未設定")
-                active_key = group.members.get(KeyState.ACTIVE, "未設定")
-                sub_active_key1 = group.members.get(KeyState.SUB_ACTIVE1, "未設定")
-                sub_active_key2 = group.members.get(KeyState.SUB_ACTIVE2, "未設定")
-                sub_active_key3 = group.members.get(KeyState.SUB_ACTIVE3, "未設定")
+            main_keys = [k["鍵名"] for k in keys[:3]]
+            sub_keys = [k["鍵名"] for k in keys[3:]]
 
-                text = (
-                    f"{config.event_name} - {config.duration}s | "
-                    f"🔴主鍵位：{select_key} -> {lock_key} -> {active_key} | "
-                    f"🟡 副鍵位：{sub_active_key1} - {sub_active_key2} - {sub_active_key3}"
-                )
+            text = (
+                f"{event} - {duration} | "
+                f"🔴主鍵位：{' -> '.join(main_keys) if main_keys else '未設定'} | "
+                f"🟡副鍵位：{' - '.join(sub_keys) if sub_keys else '未設定'}"
+            )
 
-                item = QListWidgetItem(text)
-                item.setData(Qt.ItemDataRole.UserRole, config)
-                self.timer_list.addItem(item)
+            item = QListWidgetItem(text)
+            item.setData(Qt.ItemDataRole.UserRole, raw)
+            self.timer_list.addItem(item)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -31,7 +31,7 @@ from model.timer_factory import KeyMap, KeyState, TimerConfig, KeyGroup
 
 
 class EditWindow(QDialog):
-    def __init__(self, title='編輯計時器', config: TimerConfig = None, parent=None):
+    def __init__(self, title='編輯計時器', parent=None):
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setMinimumSize(700, 350)
@@ -44,9 +44,7 @@ class EditWindow(QDialog):
         self._setup_ui()
         self.recording_index = None
         self.edit_manager = EditWindowManager(self.update_key_label)
-        # data_manager.subscribe(self.load_config(config))
-        if config:
-            self.load_config(config)
+
 
     def _setup_ui(self):
         main_layout = QVBoxLayout()
@@ -185,57 +183,26 @@ class EditWindow(QDialog):
         self.key_labels[index].setText("None")
 
     def _on_confirm(self):
-        config = TimerConfig(
-            event_name=self.event_name_input.text(),
-            limit_time=self.limit_time_input.value(),
-            duration=self.duration_input.value(),
-            keymap=self._collect_keymap()
-        )
-        data_manager.save_timer(config)
+        raw = self.collect_raw_input()
+        data_manager.save_raw_input(raw)  # 由 DataManager 處理包裝與快取
         self.accept()
 
-    def _collect_keymap(self) -> KeyMap:
-        role_map = {
-            0: KeyState.SELECT,
-            1: KeyState.LOCK,
-            2: KeyState.ACTIVE,
-            3: KeyState.SUB_ACTIVE1,
-            4: KeyState.SUB_ACTIVE2,
-            5: KeyState.SUB_ACTIVE3
+    def collect_raw_input(self) -> dict:
+        return {
+            "event_name": self.event_name_input.text().strip(),
+            "duration": self.duration_input.value(),
+            "limit_time": self.limit_time_input.value(),
+            "key_labels": [label.text() for label in self.key_labels]
         }
 
-        members: Dict[KeyState, str] = {}
-        select_key: Optional[str] = None
-
+    def load_raw_input(self, raw: dict):
+        self.event_name_input.setText(raw.get("event_name", ""))
+        self.duration_input.setValue(raw.get("duration", 10))
+        self.limit_time_input.setValue(raw.get("limit_time", 0))
+        key_labels = raw.get("key_labels", [])
         for i, label in enumerate(self.key_labels):
-            key = label.text()
-            if key and key != "None":
-                state = role_map[i]
-                members[state] = key
-                if state == KeyState.SELECT:
-                    select_key = key
+            label.setText(key_labels[i] if i < len(key_labels) else "None")
 
-        if not select_key:
-            # 若沒有 SELECT，視為單鍵觸發，使用事件名稱作為 group_id
-            group_id = self.event_name_input.text().strip() or "default"
-            select_key = "__single__"
-        else:
-            group_id = select_key
-
-        group = KeyGroup(select_key=select_key, members=members)
-        return KeyMap(groups={group_id: group})
-
-    def load_config(self, config: TimerConfig):
-        self.event_name_input.setText(config.event_name)
-        self.limit_time_input.setValue(config.limit_time)
-        self.duration_input.setValue(config.duration)
-        self.load_keymap(config.keymap)
-
-    def load_keymap(self, keymap: KeyMap):
-        print(keymap.to_dict())
-        print(type(keymap.to_dict()))
-
-        pass
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
