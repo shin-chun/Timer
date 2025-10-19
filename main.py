@@ -25,7 +25,7 @@ def main():
     # start_hotkey_listener(callback=window_manager.toggle_timer_window)
 
     # Step 5: 進入事件迴圈
-    sys.exit(app.exec())
+    # sys.exit(app.exec())
 
 if __name__ == "__main__":
     main()

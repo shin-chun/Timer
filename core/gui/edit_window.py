@@ -1,6 +1,5 @@
 import sys
 from functools import partial
-from typing import Dict, Optional
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
@@ -9,7 +8,6 @@ from PySide6.QtWidgets import (
 )
 from core.manager.data_manager import data_manager
 from core.manager.edit_window_manager import EditWindowManager
-from model.timer_factory import KeyMap, KeyState, TimerConfig, KeyGroup
 
 
 # class EditWindow(QDialog):

@@ -2,23 +2,25 @@
 from dataclasses import dataclass, field
 from typing import Optional, Dict
 from enum import Enum
-from core.gui.timer_window import CooldownState
+
 
 class KeyState(Enum):
-    IDLE = "IDLE"
-    SELECT = "SELECT"
-    LOCK = "LOCK"
-    ACTIVE = "ACTIVE"
-    SUB_ACTIVE1 = "SUB_ACTIVE1"
-    SUB_ACTIVE2 = "SUB_ACTIVE2"
-    SUB_ACTIVE3 = "SUB_ACTIVE3"
+    IDLE = 0
+    SELECT = 1
+    LOCK = 2
+    ACTIVE = 3
+    SUB_ACTIVE1 = 4
+    SUB_ACTIVE2 = 5
+    SUB_ACTIVE3 = 6
 
-KEYSTATE_TO_COOLDOWN = {
-    KeyState.IDLE: CooldownState.IDLE,
-    KeyState.SELECT: CooldownState.SELECTED,
-    KeyState.LOCK: CooldownState.LOCKED,
-    KeyState.ACTIVE: CooldownState.TRIGGERED,
-    # 其他對應視需求補上
+STATE_COLOR_MAP = {
+    KeyState.IDLE: "white",
+    KeyState.SELECT: "yellow",
+    KeyState.LOCK: "red",
+    KeyState.ACTIVE: "gray",
+    KeyState.SUB_ACTIVE1: "gray",
+    KeyState.SUB_ACTIVE2: "gray",
+    KeyState.SUB_ACTIVE3: "gray"
 }
 
 @dataclass
@@ -26,14 +28,14 @@ class KeyGroup:
     select_key: str
     members: Dict[KeyState, str]  # 包含 LOCK, ACTIVE 等
 
-    def to_dict(self) -> dict:
+    def group_to_dict(self) -> dict:
         return {
             "select_key": self.select_key,
             "members": {state.name: key for state, key in self.members.items()}
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "KeyGroup":
+    def group_from_dict(cls, data: dict) -> "KeyGroup":
         members_raw = data.get("members", {})
         members = {
             KeyState[k]: v for k, v in members_raw.items()
@@ -66,16 +68,16 @@ class KeyMap:
                 return group.members[state]
         return None
 
-    def to_dict(self) -> dict:
+    def map_to_dict(self) -> dict:
         return {
-            group_id: group.to_dict()
+            group_id: group.group_to_dict()
             for group_id, group in self.groups.items()
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "KeyMap":
+    def map_from_dict(cls, data: dict) -> "KeyMap":
         groups = {
-            group_id: KeyGroup.from_dict(group_data)
+            group_id: KeyGroup.group_from_dict(group_data)
             for group_id, group_data in data.items()
         }
         return cls(groups=groups)
@@ -96,19 +98,19 @@ class TimerConfig:
             self.keymap.get(KeyState.ACTIVE) is not None
         )
 
-    def to_dict(self) -> dict:
+    def config_to_dict(self) -> dict:
         """轉換為可序列化的 dict 結構"""
         return {
             "event_name": self.event_name,
             "limit_time": self.limit_time,
             "duration": self.duration,
-            "keymap": self.keymap.to_dict()
+            "keymap": self.keymap.map_to_dict()
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "TimerConfig":
+    def config_from_dict(cls, data: dict) -> "TimerConfig":
         keymap_data = data.get("keymap", {})
-        keymap = KeyMap.from_dict(keymap_data)
+        keymap = KeyMap.map_from_dict(keymap_data)
         return cls(
             event_name=data.get("event_name", ""),
             limit_time=data.get("limit_time", 0),

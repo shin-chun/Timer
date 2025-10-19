@@ -1,14 +1,23 @@
 import sys
 
+# 📦 視窗與應用程式
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QGridLayout, QHBoxLayout,
-    QPushButton, QListWidget, QListWidgetItem, QLabel, QSizePolicy, QApplication, QDialog, QFileDialog
+    QMainWindow, QWidget, QApplication, QDialog
 )
+# 📐 Layout 排版
+from PySide6.QtWidgets import (
+    QVBoxLayout, QHBoxLayout, QGridLayout
+)
+# 🎛️ 控制元件與列表
+from PySide6.QtWidgets import (
+    QPushButton, QListWidget, QListWidgetItem, QLabel, QFileDialog
+)
+# 📏 尺寸與樣式
+from PySide6.QtWidgets import QSizePolicy
 from PySide6.QtGui import QFont
 from PySide6.QtCore import Qt
 from core.manager.data_manager import data_manager
 from core.gui.edit_window import EditWindow
-from model.timer_factory import KeyMap, KeyState, TimerConfig, KeyGroup
 
 
 class MainWindow(QMainWindow):

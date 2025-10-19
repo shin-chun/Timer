@@ -46,5 +46,8 @@ class DataManager:
             ]
         }
 
+    def get_timer_add(self):
+        pass
+
 # 單例模式（可選）
 data_manager = DataManager()
