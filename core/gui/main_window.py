@@ -98,21 +98,22 @@ class MainWindow(QMainWindow):
         return grid_layout
 
     def init_bottom_button(self, font):
-        bottom_button = QPushButton("啟動計時器")
-        bottom_button.setFont(font)
-        bottom_button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.bottom_button = QPushButton("啟動計時器")  # ✅ 綁定成屬性
+        self.bottom_button.setFont(font)
+        self.bottom_button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.bottom_button.clicked.connect(self.handle_timer)
 
         layout = QHBoxLayout()
         layout.addStretch()
-        layout.addWidget(bottom_button)
+        layout.addWidget(self.bottom_button)
         layout.addStretch()
         return layout
 
     def init_label(self, font):
-        label = QLabel("請點選按鈕")
-        label.setFont(font)
-        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        return label
+        self.label = QLabel("請點選按鈕")
+        self.label.setFont(font)
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        return self.label
 
     def handle_button_click(self, index):
         match index:
@@ -169,6 +170,17 @@ class MainWindow(QMainWindow):
             data_manager.load_from_file(filepath)
             self.refresh_timer_list()
             print(f"已匯入設定檔：{filepath}")
+
+    def handle_timer(self):
+        current_text = self.bottom_button.text()
+        if current_text == "啟動計時器":
+            self.bottom_button.setText("停止計時器")
+            self.label.setText("計時器啟動中")
+            # 這裡可以加入啟動邏輯，例如顯示視窗
+        else:
+            self.bottom_button.setText("啟動計時器")
+            self.label.setText("計時器已停止")
+            # 這裡可以加入停止邏輯，例如關閉視窗
 
     def on_timer_updated(self, raw: dict):
         self.refresh_timer_list()

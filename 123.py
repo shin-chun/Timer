@@ -1,32 +1,15 @@
-from PySide6.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout
-from PySide6.QtCore import QTimer, QTime
+from typing import Callable
 
-class TimeWidget(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Tick 計時器")
+def process(func: Callable[[int, str], bool]):
+    result = func(42, "hello")
+    print(result)
 
-        # 建立 UI 元件
-        self.label = QLabel("目前時間：", self)
-        self.label.setStyleSheet("font-size: 24px;")
+# 定義一個符合 Callable 的函式
+def my_callback(x: int, y: str) -> bool:
+    print(f"收到參數：{x}, {y}")
+    return x == 42 and y == "hello"
 
-        layout = QVBoxLayout()
-        layout.addWidget(self.label)
-        self.setLayout(layout)
+# 呼叫 process 並傳入函式
+process(my_callback)
 
-        # 建立 QTimer，每秒觸發一次
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.update_time)
-        self.timer.start(1000)  # 每 1000 毫秒觸發一次
-
-        self.update_time()  # 初始化顯示一次
-
-    def update_time(self):
-        current_time = QTime.currentTime().toString("HH:mm:ss")
-        self.label.setText(f"目前時間：{current_time}")
-
-if __name__ == "__main__":
-    app = QApplication([])
-    widget = TimeWidget()
-    widget.show()
-    app.exec()
+process(lambda x, y: x > 10 and "h" in y)
