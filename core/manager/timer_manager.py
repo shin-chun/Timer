@@ -1,22 +1,16 @@
-from time import sleep
-from tokenize import Single
-
-from PySide6.QtCore import Signal, QObject
-
-from core.manager.data_manager import data_manager
+from PySide6.QtCore import Signal
 from model.timer_factory import KeyState
 
 
-class TimerManager(QObject):
+class TimerManager:
     tick = Signal()
-    def __init__(self,  keys_sequence, event_name=None, limit_time=3, duration=10, keystate: KeyState=KeyState.IDLE):
-        super().__init__()
+    def __init__(self,  keys_sequence, event_name=None, limit_time=3, duration=10, state: KeyState=KeyState.IDLE):
         self.keys_sequence = keys_sequence
         self.event_name = event_name
         self.limit_time = limit_time
         self.duration = duration
         self.remaining_time = duration
-        self.state = keystate
+        self.state = state
 
     def start_tick(self):
         if self.state == KeyState.ACTIVE or self.state == KeyState.SUB_ACTIVE1 or self.state == KeyState.SUB_ACTIVE2 or self.state == KeyState.SUB_ACTIVE3:
