@@ -18,6 +18,7 @@ from PySide6.QtGui import QFont
 from PySide6.QtCore import Qt
 from core.manager.data_manager import data_manager
 from core.gui.edit_window import EditWindow
+from core.manager.timer_manager import TimerManager
 
 
 class MainWindow(QMainWindow):
@@ -170,6 +171,8 @@ class MainWindow(QMainWindow):
             data_manager.load_from_file(filepath)
             self.refresh_timer_list()
             print(f"已匯入設定檔：{filepath}")
+            # a = TimerManager()
+            # print(a.get_data())
 
     def handle_timer(self):
         current_text = self.bottom_button.text()

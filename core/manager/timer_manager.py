@@ -1,26 +1,28 @@
 from PySide6.QtCore import Signal
+
+from core.manager.data_manager import DataManager, data_manager
 from model.timer_factory import KeyState
 
 
 class TimerManager:
     tick = Signal()
-    def __init__(self,  keys_sequence, event_name=None, limit_time=3, duration=10, state: KeyState=KeyState.IDLE):
-        self.keys_sequence = keys_sequence
-        self.event_name = event_name
-        self.limit_time = limit_time
-        self.duration = duration
-        self.remaining_time = duration
-        self.state = state
+    def __init__(self):
+        self._group_cache = {}
+
+    def get_data(self):
+        raw_inputs = data_manager.get_all_raw_inputs()
+        print(raw_inputs)
 
     def start_tick(self):
         if self.state == KeyState.ACTIVE or self.state == KeyState.SUB_ACTIVE1 or self.state == KeyState.SUB_ACTIVE2 or self.state == KeyState.SUB_ACTIVE3:
             self.tick.emit()
 
     def stop_tick(self):
-        self.state = self.state.IDLE
+        pass
 
 
     def match_key(self, key):
+        return
         print(self.state)
         if key == self.keys_sequence[0]:
             self.state = self.state.SELECT
@@ -54,8 +56,6 @@ class TimerManager:
     #     elif key == self.keys_sequence[5]:
     #         self.state = self.state.SUB_ACTIVE3
     #         print(self.state)
-
-
 # keys_sequence = ['a', 'b', 'c', 'd', 'e', 'f']
 # a = TimerManager(keys_sequence)
 #

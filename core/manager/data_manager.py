@@ -34,6 +34,7 @@ class DataManager:
             self._notify_subscribers(item)
         print(f'原始資料已匯入：{self._raw_inputs}')
 
+
     def get_ui_snapshot(self, raw: Dict) -> Dict:
         return {
             "事件名稱": raw.get("event_name", ""),

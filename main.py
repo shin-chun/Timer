@@ -3,6 +3,9 @@
 import sys
 from PySide6.QtWidgets import QApplication
 from core.gui.main_window import MainWindow
+from core.manager.timer_manager import TimerManager
+
+
 # from manager.main_window_manager import MainWindowManager
 # from hotkey.listen_key import hotkeylistener
 # from manager.data_manager import DataManager
