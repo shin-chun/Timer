@@ -1,7 +1,31 @@
 # manager/timer_factory.py
+import threading
 from dataclasses import dataclass, field
 from typing import Optional, Dict
 from enum import Enum
+
+from core.manager.data_manager import data_manager
+
+@dataclass
+class KeyMap:
+    select : Optional[str] = None
+    lock : Optional[str] = None
+    member : Optional[Dict[str, str]] = None
+
+    def group_to_dict(self) -> dict:
+        return {
+            "select": self.select,
+            "lock": self.lock,
+            "member": self.member,
+        }
+
+
+
+member = {'active':'c', 'sub_active1':'d', 'sub_active2':'e', 'sub_active3':'f'}
+a = KeyMap('a', 'b', member=member)
+# print(a.items())
+print(a.group_to_dict()['member'])
+print(a.group_to_dict().items())
 
 
 class KeyState(Enum):

@@ -11,6 +11,19 @@ class DataManager:
         print(f'原始資料已儲存：{self._raw_inputs}')
         self._notify_subscribers(raw)
 
+    def remove_raw_input(self, raw: Dict):
+        self._raw_inputs = [r for r in self._raw_inputs if r != raw]
+        self._notify_subscribers(raw)
+        print(f'資料已刪除{self._raw_inputs}')
+
+    def update_raw(self, old: dict, new: dict):
+        try:
+            index = self._raw_inputs.index(old)
+            self._raw_inputs[index] = new
+            self._notify_subscribers(new)
+        except ValueError:
+            print("找不到要更新的計時器")
+
     def get_all_raw_inputs(self) -> List[Dict]:
         return self._raw_inputs
 
@@ -51,4 +64,5 @@ class DataManager:
         pass
 
 # 單例模式（可選）
+
 data_manager = DataManager()

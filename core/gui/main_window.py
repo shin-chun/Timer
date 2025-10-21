@@ -77,7 +77,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
         data_manager.subscribe(self.on_timer_updated)
         self.refresh_timer_list()
-        self.timer_list.itemDoubleClicked.connect(self.edit_timer_from_item)
+        self.timer_list.itemDoubleClicked.connect(self.edit_timer)
 
     def init_buttons(self, font):
         grid_layout = QGridLayout()
@@ -119,7 +119,7 @@ class MainWindow(QMainWindow):
     def handle_button_click(self, index):
         match index:
             case 0:
-                self.create_timer()
+                self.open_edit_window()
             case 1:
                 self.edit_timer()
             case 2:
@@ -131,27 +131,24 @@ class MainWindow(QMainWindow):
             case 5:
                 self.import_config()
 
-    def create_timer(self):
+    def open_edit_window(self):
         edit_window = EditWindow(parent=self)
         if edit_window.exec() == QDialog.accepted:
             self.refresh_timer_list()
 
-    def edit_timer(self, raw: dict = None):
-        if raw is None:
-            selected_items = self.timer_list.selectedItems()
-            if not selected_items:
-                print("請先選擇要編輯的計時器")
-                return
+    def edit_timer(self):
+        selected_items = self.timer_list.selectedItems()
+        if not selected_items:
+            print("請先選擇要編輯的計時器")
+            return
+        else:
             raw = selected_items[0].data(Qt.ItemDataRole.UserRole)
 
         edit_window = EditWindow(parent=self)
         edit_window.load_raw_input(raw)
-        if edit_window.exec() == QDialog.accepted:
-            self.refresh_timer_list()
 
-    def edit_timer_from_item(self, item: QListWidgetItem):
-        raw = item.data(Qt.ItemDataRole.UserRole)
-        self.edit_timer(raw)
+        if edit_window.exec() == QDialog.accepted:
+            self.refresh_timer_list()  # 🔄 UI 更新即可
 
     def save_file(self):
         filepath, _ = QFileDialog.getSaveFileName(self, "儲存設定檔", "timers.json", "JSON Files (*.json)")
@@ -160,10 +157,22 @@ class MainWindow(QMainWindow):
             print(f"已儲存到 {filepath}")
 
     def delete_timer(self):
-        print("刪除計時器")
+        selected_items = self.timer_list.selectedItems()
+        if not selected_items:
+            print("請先選擇要刪除的計時器")
+            return
+
+        item = selected_items[0]
+        raw = item.data(Qt.ItemDataRole.UserRole)
+
+        # 從 data_manager 移除該計時器
+        data_manager.remove_raw_input(raw)
+
+        # 更新列表
+        self.refresh_timer_list()
 
     def reset_timer(self):
-        print("重置計時器")
+            print("重置計時器")
 
     def import_config(self):
         filepath, _ = QFileDialog.getOpenFileName(self, "匯入設定檔", "", "JSON Files (*.json)")

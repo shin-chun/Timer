@@ -31,6 +31,7 @@ from core.manager.edit_window_manager import EditWindowManager
 class EditWindow(QDialog):
     def __init__(self, title='編輯計時器', parent=None):
         super().__init__(parent)
+        self.original_raw = []
         self.setWindowTitle(title)
         self.setMinimumSize(700, 350)
 
@@ -181,8 +182,17 @@ class EditWindow(QDialog):
         self.key_labels[index].setText("None")
 
     def _on_confirm(self):
-        raw = self.collect_raw_input()
-        data_manager.save_raw_input(raw)  # 由 DataManager 處理包裝與快取
+        updated_raw = self.collect_raw_input()
+        print(f'原始資料：{self.original_raw}')
+        print(f'新增資料{updated_raw}')
+
+        # 如果是編輯模式，更新原始資料
+        if hasattr(self, "original_raw") and self.original_raw:
+            data_manager.update_raw(self.original_raw, updated_raw)
+        else:
+            # 如果是新增模式，直接儲存
+            data_manager.save_raw_input(updated_raw)
+
         self.accept()
 
     def collect_raw_input(self) -> dict:
@@ -194,12 +204,14 @@ class EditWindow(QDialog):
         }
 
     def load_raw_input(self, raw: dict):
+        self.original_raw = raw.copy()
         self.event_name_input.setText(raw.get("event_name", ""))
         self.duration_input.setValue(raw.get("duration", 10))
-        self.limit_time_input.setValue(raw.get("limit_time", 0))
+        self.limit_time_input.setValue(raw.get("limit_time", 3))
         key_labels = raw.get("key_labels", [])
         for i, label in enumerate(self.key_labels):
             label.setText(key_labels[i] if i < len(key_labels) else "None")
+        return self.original_raw
 
 
 if __name__ == "__main__":
