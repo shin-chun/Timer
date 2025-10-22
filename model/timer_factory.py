@@ -21,11 +21,11 @@ class KeyMap:
 
 
 
-member = {'active':'c', 'sub_active1':'d', 'sub_active2':'e', 'sub_active3':'f'}
-a = KeyMap('a', 'b', member=member)
-# print(a.items())
-print(a.group_to_dict()['member'])
-print(a.group_to_dict().items())
+# member = {'active':'c', 'sub_active1':'d', 'sub_active2':'e', 'sub_active3':'f'}
+# a = KeyMap('a', 'b', member=member)
+# # print(a.items())
+# print(a.group_to_dict()['member'])
+# print(a.group_to_dict().items())
 
 
 class KeyState(Enum):

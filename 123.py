@@ -2,8 +2,8 @@ from enum import Enum
 from dataclasses import dataclass
 from tkinter import messagebox
 from typing import Dict, Optional
+import tkinter as tk
 from model.timer_factory import TimerConfig
-
 
 @dataclass
 class KeyMap:
@@ -36,8 +36,12 @@ class TimerConfig:
             return False
         return True
 
+
+
+
 keymap = KeyMap('a', 'b', 'c', 'd', 'e', 'f')
-a = TimerConfig('測試', 3, 10, keymap=keymap)
+a = TimerConfig('測試', -1, 0, keymap=keymap)
+a.is_valid()
 
 print(a)
 print(a.keymap, type(a.keymap))
