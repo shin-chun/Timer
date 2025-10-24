@@ -16,9 +16,13 @@ from PySide6.QtWidgets import (
 from PySide6.QtWidgets import QSizePolicy
 from PySide6.QtGui import QFont
 from PySide6.QtCore import Qt
+
+from core.gui.timer_window import TimerWindow
+from core.hotkey.listen_key import HotkeyListener
 from core.manager.data_manager import data_manager
 from core.gui.edit_window import EditWindow
 from core.manager.timer_manager import TimerManager
+from core.model.timer_factory import KeyState
 
 
 class MainWindow(QMainWindow):
@@ -78,6 +82,12 @@ class MainWindow(QMainWindow):
         data_manager.subscribe(self.on_timer_updated)
         self.refresh_timer_list()
         self.timer_list.itemDoubleClicked.connect(self.edit_timer)
+
+        self.timer_manager = TimerManager()
+        # self.timer_manager.load_configs()
+        self.timer_windows = []
+
+        self.hotkey_listener = HotkeyListener(self.timer_manager)
 
     def init_buttons(self, font):
         grid_layout = QGridLayout()
@@ -188,11 +198,44 @@ class MainWindow(QMainWindow):
         if current_text == "啟動計時器":
             self.bottom_button.setText("停止計時器")
             self.label.setText("計時器啟動中")
-            # 這裡可以加入啟動邏輯，例如顯示視窗
+
+            # 🔄 清空舊視窗（避免重複）
+            for win in self.timer_windows:
+                win.close()
+            self.timer_windows.clear()
+
+            # ✅ 啟動鍵盤監聽
+            self.hotkey_listener.start()
+
+            timer_manager = TimerManager()
+            timer_manager.load_configs()
+
+            configs = timer_manager.get_data()
+            print(configs)
+            for config in configs:
+                if not config.is_valid():
+                    continue
+                win = TimerWindow(
+                    name=config.event_name,
+                    cooldown_seconds=config.duration,
+                    timer_manager=timer_manager,
+                    state=KeyState.IDLE
+                )
+                win.set_state(KeyState.IDLE)  # ✅ 顯示初始狀態但不啟動
+                win.show()
+                self.timer_windows.append(win)
+
         else:
             self.bottom_button.setText("啟動計時器")
             self.label.setText("計時器已停止")
-            # 這裡可以加入停止邏輯，例如關閉視窗
+
+            # ✅ 停止鍵盤監聽
+            self.hotkey_listener.stop()
+
+            # 🛑 關閉所有視窗
+            for win in self.timer_windows:
+                win.close()
+            self.timer_windows.clear()
 
     def on_timer_updated(self, raw: dict):
         self.refresh_timer_list()
@@ -217,6 +260,7 @@ class MainWindow(QMainWindow):
             item = QListWidgetItem(text)
             item.setData(Qt.ItemDataRole.UserRole, raw)
             self.timer_list.addItem(item)
+
 
 
 if __name__ == "__main__":

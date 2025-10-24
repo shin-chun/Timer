@@ -1,8 +1,5 @@
-from typing import Callable, Optional, Dict
+from typing import Callable, Optional
 from pynput import keyboard
-
-from core.manager.data_manager import data_manager
-from model.timer_factory import TimerConfig, KeyState, KeyMap, KeyGroup
 
 
 class EditWindowManager:
@@ -13,7 +10,7 @@ class EditWindowManager:
     - 將錄製結果回傳給 UI（透過 callback）
     """
 
-    def __init__(self, update_callback: Callable[[int, str], None]):
+    def __init__(self, update_callback: Callable[[str], None]):
         """
         初始化管理器
 

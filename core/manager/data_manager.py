@@ -1,6 +1,9 @@
 import json
 from typing import Callable, List, Dict, Optional
 
+from core.model.timer_factory import TimerConfig
+
+
 class DataManager:
     def __init__(self):
         self._raw_inputs: List[Dict] = []
@@ -60,8 +63,12 @@ class DataManager:
             ]
         }
 
-    def get_timer_add(self):
-        pass
+    def get_all_configs(self) -> List[TimerConfig]:
+        return [
+            TimerConfig.config_from_dict(raw)
+            for raw in self._raw_inputs
+            if isinstance(raw, dict)
+        ]
 
 # 單例模式（可選）
 

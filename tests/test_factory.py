@@ -1,9 +1,14 @@
-from enum import Enum
 from dataclasses import dataclass
+from enum import Enum
 from tkinter import messagebox
-from typing import Dict, Optional
-import tkinter as tk
-from model.timer_factory import TimerConfig
+from typing import Optional
+
+class KeyState(Enum):
+    IDLE = 0
+    STARTED = 1
+    LOCK = 2
+    ACTIVE = 3
+
 
 @dataclass
 class KeyMap:

@@ -1,4 +1,8 @@
 import sys
+import threading
+import time
+
+from typing import Dict
 
 from PySide6.QtCore import Qt, QPoint, QTimer
 from PySide6.QtGui import QFont, QFontMetrics
@@ -6,7 +10,7 @@ from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QSizePolicy, QApplic
 
 from core.manager.data_manager import data_manager
 from core.manager.timer_manager import TimerManager
-from model.timer_factory import KeyState, STATE_COLOR_MAP
+from core.model.timer_factory import KeyState, STATE_COLOR_MAP
 
 class TimerWindow(QWidget):
     def __init__(self, name, cooldown_seconds, timer_manager: TimerManager, state: KeyState=KeyState.IDLE):
@@ -17,7 +21,6 @@ class TimerWindow(QWidget):
         self.state = state
         self.state_cycle = list(KeyState)
         self.state_index = 0
-        timer_manager.tick.connect(self.on_tick)
 
         # 加入 QTimer 每秒切換狀態
         # self.cycle_timer = QTimer(self)
@@ -51,17 +54,24 @@ class TimerWindow(QWidget):
         self.setFixedHeight(50)
 
         data_manager.subscribe(self.on_timer_updated)
+        timer_manager.tick.connect(self.on_tick)
         # self.on_tick()
 
         # self.update_label()
+
+    def on_timer_updated(self, raw: Dict):
+        if raw.get("event_name") == self.name:
+            self.cooldown_seconds = raw.get("duration", self.cooldown_seconds)
+            self.remaining = self.cooldown_seconds
+            self.update_label()
 
     def on_tick(self):
         if not self.timer.isActive():
             self.timer.start(1000)
 
     def update_label(self):
-        color = STATE_COLOR_MAP.get(self.state)
-        if self.remaining > 0:
+        color = STATE_COLOR_MAP.get(self.state, 'white')
+        if self.remaining > 0 and self.timer.isActive():
             self.remaining -= 1
         else:
             self.timer.stop()
@@ -101,19 +111,33 @@ class TimerWindow(QWidget):
             self._dragging = False
             event.accept()
 
-    def cycle_state(self):
-        self.state_index = (self.state_index + 1) % len(self.state_cycle)
-        self.state = self.state_cycle[self.state_index]
+    def set_state(self, state: KeyState):
+        self.state = state
         self.update_label()
 
+
+    # def cycle_state(self):
+    #     self.state_index = (self.state_index + 1) % len(self.state_cycle)
+    #     self.state = self.state_cycle[self.state_index]
+    #     self.update_label()
+
+
+
+
+# def simulate_tick(manager: TimerManager):
+#     print("🔔 tick emitted")
+#     manager.tick.emit()
+#
 # if __name__ == "__main__":
 #     app = QApplication(sys.argv)
 #
-#     # 建立一個測試用 TimerWindow
-#     window = TimerWindow(name="測試", cooldown_seconds=10)
-#     # window.state(KeyState.IDLE)
-#     # window.set_remaining(10)
-#
+#     # 建立 manager 與 window
+#     manager = TimerManager()
+#     window = TimerWindow(name="測試事件", cooldown_seconds=10, timer_manager=manager)
 #     window.show()
 #
+#     # 啟動 tick 模擬器（非 GUI thread）
+#     threading.Thread(target=simulate_tick, args=(manager,), daemon=True).start()
+#
 #     sys.exit(app.exec())
+

@@ -1,31 +1,7 @@
 # manager/timer_factory.py
-import threading
 from dataclasses import dataclass, field
 from typing import Optional, Dict
 from enum import Enum
-
-from core.manager.data_manager import data_manager
-
-@dataclass
-class KeyMap:
-    select : Optional[str] = None
-    lock : Optional[str] = None
-    member : Optional[Dict[str, str]] = None
-
-    def group_to_dict(self) -> dict:
-        return {
-            "select": self.select,
-            "lock": self.lock,
-            "member": self.member,
-        }
-
-
-
-# member = {'active':'c', 'sub_active1':'d', 'sub_active2':'e', 'sub_active3':'f'}
-# a = KeyMap('a', 'b', member=member)
-# # print(a.items())
-# print(a.group_to_dict()['member'])
-# print(a.group_to_dict().items())
 
 
 class KeyState(Enum):
@@ -33,19 +9,14 @@ class KeyState(Enum):
     SELECT = 1
     LOCK = 2
     ACTIVE = 3
-    SUB_ACTIVE1 = 4
-    SUB_ACTIVE2 = 5
-    SUB_ACTIVE3 = 6
 
 STATE_COLOR_MAP = {
     KeyState.IDLE: "white",
     KeyState.SELECT: "yellow",
     KeyState.LOCK: "red",
     KeyState.ACTIVE: "gray",
-    KeyState.SUB_ACTIVE1: "gray",
-    KeyState.SUB_ACTIVE2: "gray",
-    KeyState.SUB_ACTIVE3: "gray"
 }
+
 
 @dataclass
 class KeyGroup:
@@ -70,7 +41,6 @@ class KeyGroup:
             select_key=data.get("select_key", ""),
             members=members
         )
-
 
 
 @dataclass
@@ -118,8 +88,8 @@ class TimerConfig:
         return (
             bool(self.event_name.strip()) and
             self.duration > 0 and
-            self.limit_time >= 0 and
-            self.keymap.get(KeyState.ACTIVE) is not None
+            self.limit_time >= 0
+            # self.keymap.get(KeyState.IDLE) is not None
         )
 
     def config_to_dict(self) -> dict:
@@ -134,7 +104,8 @@ class TimerConfig:
     @classmethod
     def config_from_dict(cls, data: dict) -> "TimerConfig":
         keymap_data = data.get("keymap", {})
-        keymap = KeyMap.map_from_dict(keymap_data)
+        group_data = keymap_data.get("groups", {})  # ✅ 修正這裡
+        keymap = KeyMap.map_from_dict(group_data)
         return cls(
             event_name=data.get("event_name", ""),
             limit_time=data.get("limit_time", 0),
