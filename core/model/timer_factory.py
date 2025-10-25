@@ -112,3 +112,26 @@ class TimerConfig:
             duration=data.get("duration", 0),
             keymap=keymap
         )
+
+class KeyMapBuilder:
+    @staticmethod
+    def from_key_labels(key_labels: list[str], group_size: int = 3) -> KeyMap:
+        groups = {}
+        for i in range(0, len(key_labels), group_size):
+            group_labels = key_labels[i:i+group_size]
+            clean_labels = [k for k in group_labels if k != "None"]
+            if not clean_labels:
+                continue
+
+            select_key = clean_labels[0]
+            members = {}
+
+            if len(clean_labels) > 1:
+                members[KeyState.LOCK] = clean_labels[1]
+            if len(clean_labels) > 2:
+                members[KeyState.ACTIVE] = clean_labels[2]
+
+            group = KeyGroup(select_key=select_key, members=members)
+            groups[f"group_{i // group_size}"] = group
+
+        return KeyMap(groups=groups)

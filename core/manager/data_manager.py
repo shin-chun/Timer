@@ -9,6 +9,7 @@ class DataManager:
         self._raw_inputs: List[Dict] = []
         self._subscribers: List[Callable[[Dict], None]] = []
 
+
     def save_raw_input(self, raw: Dict):
         self._raw_inputs.append(raw)
         print(f'原始資料已儲存：{self._raw_inputs}')

@@ -1,19 +1,21 @@
 from typing import List, Dict
 
-from PySide6.QtCore import Signal, QObject
+from PySide6.QtCore import Signal, QObject, QTimer
 
-from core.manager.data_manager import data_manager
-from core.model.timer_factory import KeyState, TimerConfig
+from core.manager.data_manager import data_manager, DataManager
+from core.model.timer_factory import KeyState, TimerConfig, KeyMap, KeyGroup, KeyMapBuilder
 
 
 class TimerManager(QObject):
-    tick = Signal()
+    tick = Signal(TimerConfig)
 
     def __init__(self):
         super().__init__()
         self._group_cache = {}
         self.state = KeyState.IDLE
         self._key_state: Dict[str, KeyState] = {}  # 每個 select_key 的目前狀態
+        print(f"[DEBUG] TimerManager initialized: {id(self)}")
+
 
     def input_key(self, key_name: str):
         print(f"🧠 TimerManager 收到鍵：{key_name}")
@@ -42,9 +44,14 @@ class TimerManager(QObject):
                         self._start_timer(config)
 
     def _start_timer(self, config: TimerConfig):
-        self.state = KeyState.ACTIVE
-        print(f"✅ 啟動計時器：{config.event_name}")
-        self.tick.emit()
+        self.state = KeyState.IDLE
+        self.tick.emit(config)
+
+    def inject_receiver(self, receiver_callable):
+        self.tick.connect(receiver_callable)
+
+    def on_tick(self):
+        print('tick:已接到')
 
     def reset_states(self):
         self._key_state.clear()
@@ -53,15 +60,19 @@ class TimerManager(QObject):
     def load_configs(self):
         self._configs = self.get_data()
 
-    def get_data(self) -> List[TimerConfig]:
-        raw_inputs = data_manager.get_all_raw_inputs()
-        print(f'get_data:{raw_inputs}')
-        configs = [
-            TimerConfig.config_from_dict(raw)
-            for raw in raw_inputs
-            if isinstance(raw, dict)
-        ]
-        return configs
+    def get_data(self) -> list[TimerConfig]:
+        raw_configs = data_manager.get_all_raw_inputs()
+        result = []
+        for raw in raw_configs:
+            keymap = KeyMapBuilder.from_key_labels(raw["key_labels"])
+            config = TimerConfig(
+                event_name=raw["event_name"],
+                duration=raw["duration"],
+                limit_time=raw["limit_time"],
+                keymap=keymap
+            )
+            result.append(config)
+        return result
 
     def start_tick(self):
         if self.state.name.startswith("ACTIVE") or self.state == KeyState.ACTIVE:
@@ -70,3 +81,40 @@ class TimerManager(QObject):
     def stop_tick(self):
         self.state = KeyState.IDLE
         print("計時器已停止")
+
+
+# def test_timer_activation():
+#     # 模擬原始資料
+#     data_manager._raw_inputs = [
+#         {
+#             "event_name": "影子",
+#             "duration": 60,
+#             "limit_time": 3,
+#             "key_labels": [
+#                 "Key.shift_r", "Key.left", "Key.ctrl_l",  # group_0
+#                 "Key.alt_l", "None", "Key.backspace"      # group_1
+#             ]
+#         }
+#     ]
+#
+#     # 建立 TimerManager 並連接 tick 訊號
+#     tm = TimerManager()
+#     tm.tick.connect(lambda: print("🕒 tick 被觸發"))
+#     tm.load_configs()
+#
+#     # 模擬鍵盤輸入流程
+#     tm.input_key("Key.shift_r")    # SELECT group_0
+#     tm.input_key("Key.left")
+#     tm.input_key("Key.ctrl_l")# LOCK group_0
+#     tm.input_key("Key.shift_r")      # ACTIVE group_0 → 應該啟動計時器
+#     tm.input_key("Key.ctrl_l")
+#     tm.input_key("c")
+#     tm.input_key("Key.left")
+#     tm.input_key("Key.ctrl_l")
+#
+#     # 驗證狀態
+#     assert tm.state == KeyState.ACTIVE
+#     print("✅ 測試完成：計時器已啟動")
+#
+# test_timer_activation()
+

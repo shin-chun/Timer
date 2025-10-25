@@ -27,7 +27,7 @@
     },
     {
         "event_name": "餘暉",
-        "duration": 10,
+        "duration": 30,
         "limit_time": 3,
         "key_labels": [
             "Key.shift_r",

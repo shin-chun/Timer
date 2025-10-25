@@ -26,7 +26,7 @@ from core.model.timer_factory import KeyState
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, manager: TimerManager):
         super().__init__()
         self.setWindowTitle("ElswordTimer")
         self.setGeometry(100, 100, 600, 450)
@@ -83,8 +83,9 @@ class MainWindow(QMainWindow):
         self.refresh_timer_list()
         self.timer_list.itemDoubleClicked.connect(self.edit_timer)
 
-        self.timer_manager = TimerManager()
+        self.timer_manager = manager
         # self.timer_manager.load_configs()
+        print(f'window:{id(self.timer_manager)}')
         self.timer_windows = []
 
         self.hotkey_listener = HotkeyListener(self.timer_manager)
@@ -143,7 +144,7 @@ class MainWindow(QMainWindow):
 
     def open_edit_window(self):
         edit_window = EditWindow(parent=self)
-        if edit_window.exec() == QDialog.accepted:
+        if edit_window.show() == QDialog.accepted:
             self.refresh_timer_list()
 
     def edit_timer(self):
@@ -157,7 +158,7 @@ class MainWindow(QMainWindow):
         edit_window = EditWindow(parent=self)
         edit_window.load_raw_input(raw)
 
-        if edit_window.exec() == QDialog.accepted:
+        if edit_window.show() == QDialog.accepted:
             self.refresh_timer_list()  # 🔄 UI 更新即可
 
     def save_file(self):
@@ -207,10 +208,7 @@ class MainWindow(QMainWindow):
             # ✅ 啟動鍵盤監聽
             self.hotkey_listener.start()
 
-            timer_manager = TimerManager()
-            timer_manager.load_configs()
-
-            configs = timer_manager.get_data()
+            configs = self.timer_manager.get_data()
             print(configs)
             for config in configs:
                 if not config.is_valid():
@@ -218,7 +216,7 @@ class MainWindow(QMainWindow):
                 win = TimerWindow(
                     name=config.event_name,
                     cooldown_seconds=config.duration,
-                    timer_manager=timer_manager,
+                    timer_manager=self.timer_manager,
                     state=KeyState.IDLE
                 )
                 win.set_state(KeyState.IDLE)  # ✅ 顯示初始狀態但不啟動
@@ -263,9 +261,10 @@ class MainWindow(QMainWindow):
 
 
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec())
+# if __name__ == "__main__":
+#
+#     app = QApplication(sys.argv)
+#     window = MainWindow()
+#     window.show()
+#     sys.exit(app.exec())
 

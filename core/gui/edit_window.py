@@ -214,8 +214,8 @@ class EditWindow(QDialog):
         return self.original_raw
 
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = EditWindow()
-    window.show()
-    sys.exit(app.exec())
+# if __name__ == "__main__":
+#     app = QApplication(sys.argv)
+#     window = EditWindow()
+#     window.show()
+#     sys.exit(app.exec())
