@@ -93,34 +93,43 @@ config_list = [
         sub_active3='c'
     )
 ]
+class TestManager:
+    def __init__(self, state: KeyState=KeyState.IDLE):
+        self.state = state
+        self.id = []
 
-a = []
-def match_sequence(key):
-    for config in config_list:
-        if key == config.select:
-            if a is not None:
-                a.clear()
-        elif key == config.lock:
-            a.append(config.uuid)
-        elif key == config.active:
-            for _ in a:
-                if a[0] == config.uuid:
-                    a.clear()
+    def match_sequence(self, key):
+        config_list_data = self.get_data()
+        for config in config_list_data:
+            if config.select == 'None' and config.lock == 'None':
+                if key == config.active or key == config.sub_active1 or key == config.sub_active2 or key == config.sub_active3:
                     print(config)
-                    print(f'影子的uuid:{config.uuid}')
-        elif config.select and config.lock == 'None':
-            if key == config.active or key == config.sub_active1 or key == config.sub_active2 or key == config.sub_active3:
-                print(config)
-                print(f'覺醒的uuid:{config.uuid}')
+            elif key == config.select:
+                if self.id:
+                    self.id.clear()
+                    self.state = KeyState.SELECT
+                else:
+                    self.state = KeyState.SELECT
+            elif key == config.lock and self.state == KeyState.SELECT:
+                self.id.append(config.uuid)
+                self.state = KeyState.LOCK
+            elif key == config.active and self.state == KeyState.LOCK:
+                for _ in self.id:
+                    if self.id[0] == config.uuid:
+                        self.id.clear()
+                        print(config)
+
+    def get_data(self) -> list[TimerConfig]:
+        raw_configs = config_list
+        return raw_configs
 
 
-key_input = ['Key.shift_r', 'Key.down', 'Key.shift_r', 'Key.left', 'c', 'Key.ctrl_l', 'w']
+A = TestManager()
+
+key_input = ['w', 'Key.shift_r','Key.left', 'Key.up', 'Key.ctrl_l' ]
 for k in key_input:
-    match_sequence(k)
+    A.match_sequence(k)
 
-print(config_list[0].uuid)
-print(config_list[3].uuid)
-print(a)
 
 # for i, c in enumerate(config):
 #     print(f"[{i}] TimerConfig id: {id(c)}")
