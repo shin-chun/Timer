@@ -1,30 +1,28 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from tkinter import messagebox
 from typing import Optional
+import uuid
 
 class KeyState(Enum):
     IDLE = 0
-    STARTED = 1
+    SELECT = 1
     LOCK = 2
     ACTIVE = 3
 
-
-@dataclass
-class KeyMap:
-    select: Optional[str] = None
-    lock: Optional[str] = None
-    active: Optional[str] = None
-    sub_active1: Optional[str] = None
-    sub_active2: Optional[str] = None
-    sub_active3: Optional[str] = None
 
 @dataclass
 class TimerConfig:
     event_name : str
     limit_time : int
     duration : int
-    keymap : KeyMap
+    select: Optional[str] = None
+    lock: Optional[str] = None
+    active: Optional[str] = None
+    sub_active1: Optional[str] = None
+    sub_active2: Optional[str] = None
+    sub_active3: Optional[str] = None
+    uuid: 'uuid.UUID' = field(default_factory=uuid.uuid4)
 
     def is_valid(self) -> bool:
         if not self.event_name or not self.event_name.strip():
@@ -36,23 +34,84 @@ class TimerConfig:
         if self.limit_time < 0:
             messagebox.showerror("錯誤", "限制時間不能為負值")
             return False
-        if self.keymap is None:
-            messagebox.showerror("錯誤", "請設定有效的按鍵狀態")
-            return False
         return True
 
 
+config_list = [
+    TimerConfig(
+            event_name='影子',
+            limit_time= 3,
+            duration=60,
+            select='Key.shift_r',
+            lock='Key.left',
+            active='Key.ctrl_l',
+            sub_active1='Key.alt_l',
+            sub_active2='None',
+            sub_active3='None'
+    ),
+    TimerConfig(
+        event_name='餘暉',
+        limit_time= 3,
+        duration=25,
+        select='Key.shift_r',
+        lock='Key.up',
+        active='Key.ctrl_l',
+        sub_active1='Key.alt_l',
+        sub_active2='None',
+        sub_active3='None',
+    ),
+    TimerConfig(
+        event_name='百鬼',
+        limit_time=3,
+        duration=10,
+        select='Key.shift_r',
+        lock='Key.down',
+        active='w',
+        sub_active1='e',
+        sub_active2='f',
+        sub_active3='c'
+    ),
+    # TimerConfig(
+    #     event_name='覺醒',
+    #     limit_time=3,
+    #     duration=25,
+    #     select='None',
+    #     lock='None',
+    #     active='w',
+    #     sub_active1='e',
+    #     sub_active2='f',
+    #     sub_active3='c'
+    # )
+]
 
+a = []
+def match_sequence(key):
+    for config in config_list:
+        if key == config.select:
+            if a is not None:
+                a.clear()
+                config.state = KeyState.SELECT
+        elif key == config.lock and config.state == KeyState.SELECT:
+            a.append(config.uuid)
+            print(a[0])
+            config.state = KeyState.LOCK
+        elif key == config.active and config.state == KeyState.LOCK:
+            if a[0] == config.uuid:
+                config.state = KeyState.ACTIVE
+                a.clear()
+                print(config)
+                print(config.state)
 
-keymap = KeyMap('a', 'b', 'c', 'd', 'e', 'f')
-a = TimerConfig('測試', -1, 0, keymap=keymap)
-a.is_valid()
+key_input = ['Key.shift_r', 'Key.down', 'Key.shift_r', 'Key.left', 'c', 'Key.ctrl_l', 'w']
+for k in key_input:
+    match_sequence(k)
 
 print(a)
-print(a.keymap, type(a.keymap))
-print(a.keymap.select, type(a.keymap.select))
-print(a.keymap.lock)
-print(keymap.select)
+
+# for i, c in enumerate(config):
+#     print(f"[{i}] TimerConfig id: {id(c)}")
+#     for k, v in c.__dict__.items():
+#         print(f"{k}: {v}")
 
 
 # 定義 KeyState 枚舉

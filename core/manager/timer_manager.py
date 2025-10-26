@@ -17,9 +17,9 @@ class TimerManager(QObject):
         print(f"[DEBUG] TimerManager initialized: {id(self)}")
 
 
-    def input_key(self, key_name: str):
-        print(f"🧠 TimerManager 收到鍵：{key_name}")
-        self.handle_key_press(key_name)
+    def input_key(self, key: str):
+        print(f"🧠 TimerManager 收到鍵：{key}")
+        self.handle_key_press(key)
 
     def handle_key_press(self, key: str):
         for config in self.get_data():
@@ -42,6 +42,7 @@ class TimerManager(QObject):
                             self._start_timer(config)
                     else:
                         self._start_timer(config)
+
 
     def _start_timer(self, config: TimerConfig):
         self.state = KeyState.IDLE
