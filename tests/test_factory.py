@@ -71,17 +71,17 @@ config_list = [
         sub_active2='f',
         sub_active3='c'
     ),
-    # TimerConfig(
-    #     event_name='覺醒',
-    #     limit_time=3,
-    #     duration=25,
-    #     select='None',
-    #     lock='None',
-    #     active='w',
-    #     sub_active1='e',
-    #     sub_active2='f',
-    #     sub_active3='c'
-    # )
+    TimerConfig(
+        event_name='覺醒',
+        limit_time=3,
+        duration=25,
+        select='None',
+        lock='None',
+        active='w',
+        sub_active1='e',
+        sub_active2='f',
+        sub_active3='c'
+    )
 ]
 
 a = []
@@ -90,22 +90,26 @@ def match_sequence(key):
         if key == config.select:
             if a is not None:
                 a.clear()
-                config.state = KeyState.SELECT
-        elif key == config.lock and config.state == KeyState.SELECT:
+        elif key == config.lock:
             a.append(config.uuid)
-            print(a[0])
-            config.state = KeyState.LOCK
-        elif key == config.active and config.state == KeyState.LOCK:
-            if a[0] == config.uuid:
-                config.state = KeyState.ACTIVE
-                a.clear()
+        elif key == config.active:
+            for _ in a:
+                if a[0] == config.uuid:
+                    a.clear()
+                    print(config)
+                    print(f'影子的uuid:{config.uuid}')
+        elif config.select and config.lock == 'None':
+            if key == config.active or key == config.sub_active1 or key == config.sub_active2 or key == config.sub_active3:
                 print(config)
-                print(config.state)
+                print(f'覺醒的uuid:{config.uuid}')
+
 
 key_input = ['Key.shift_r', 'Key.down', 'Key.shift_r', 'Key.left', 'c', 'Key.ctrl_l', 'w']
 for k in key_input:
     match_sequence(k)
 
+print(config_list[0].uuid)
+print(config_list[3].uuid)
 print(a)
 
 # for i, c in enumerate(config):
