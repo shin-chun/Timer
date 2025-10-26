@@ -17,7 +17,6 @@ STATE_COLOR_MAP = {
     KeyState.ACTIVE: "gray",
 }
 
-
 @dataclass
 class KeyGroup:
     select_key: str

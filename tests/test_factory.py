@@ -4,6 +4,7 @@ from tkinter import messagebox
 from typing import Optional
 import uuid
 
+
 class KeyState(Enum):
     IDLE = 0
     SELECT = 1
@@ -36,6 +37,15 @@ class TimerConfig:
             return False
         return True
 
+COLOR_MAP= {
+    'select' : 'yellow',
+    'lock' : 'red',
+    'active' : 'gray',
+    'sub_active1' : 'gray',
+    'sub_active2' : 'gray',
+    'sub_active3' : 'gray',
+    'default' : 'white'
+}
 
 config_list = [
     TimerConfig(
