@@ -1,4 +1,5 @@
 import sys
+from typing import List
 from functools import partial
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
@@ -8,24 +9,7 @@ from PySide6.QtWidgets import (
 )
 from core.manager.data_manager import data_manager
 from core.manager.edit_window_manager import EditWindowManager
-
-
-# class EditWindow(QDialog):
-#     def __init__(self, title='編輯計時器', parent=None):
-#         super().__init__(parent)
-#         self.setWindowTitle(title)
-#         self.setMinimumSize(700, 350)
-#
-#         self.event_name_input = QLineEdit()
-#         self.limit_time_input = QSpinBox()
-#         self.duration_input = QSpinBox()
-#         self.key_labels = []
-#
-#         self._setup_ui()
-#         self.recording_index = None
-#         self.edit_manager = EditWindowManager(self.update_key_label)
-#
-#         data_manager.subscribe("load_config", self.load_config)
+from core.model.timer_factory import TimerConfig
 
 
 class EditWindow(QDialog):
@@ -182,36 +166,59 @@ class EditWindow(QDialog):
         self.key_labels[index].setText("None")
 
     def _on_confirm(self):
-        updated_raw = self.collect_raw_input()
-        print(f'原始資料：{self.original_raw}')
-        print(f'新增資料{updated_raw}')
-
-        # 如果是編輯模式，更新原始資料
-        if hasattr(self, "original_raw") and self.original_raw:
-            data_manager.update_raw(self.original_raw, updated_raw)
-        else:
-            # 如果是新增模式，直接儲存
-            data_manager.save_raw_input(updated_raw)
-
+        config_raw = self.collect_config_data()
+        data_manager.save_config_input(config_raw)
         self.accept()
 
-    def collect_raw_input(self) -> dict:
-        return {
-            "event_name": self.event_name_input.text().strip(),
-            "duration": self.duration_input.value(),
-            "limit_time": self.limit_time_input.value(),
-            "key_labels": [label.text() for label in self.key_labels]
-        }
+    def collect_config_data(self):
+        config = TimerConfig(
+            event_name=self.event_name_input.text().strip(),
+            limit_time=self.limit_time_input.value(),
+            duration=self.duration_input.value(),
+            select=self.key_labels[0].text() or 'None',
+            lock=self.key_labels[1].text() or 'None',
+            active=self.key_labels[2].text() or 'None',
+            sub_active1=self.key_labels[3].text() or 'None',
+            sub_active2=self.key_labels[4].text() or 'None',
+            sub_active3=self.key_labels[5].text() or 'None',
+        )
+        if config.is_valid():
+            return config
 
-    def load_raw_input(self, raw: dict):
-        self.original_raw = raw.copy()
-        self.event_name_input.setText(raw.get("event_name", ""))
-        self.duration_input.setValue(raw.get("duration", 10))
-        self.limit_time_input.setValue(raw.get("limit_time", 3))
-        key_labels = raw.get("key_labels", [])
-        for i, label in enumerate(self.key_labels):
-            label.setText(key_labels[i] if i < len(key_labels) else "None")
-        return self.original_raw
+    def load_original_config(self, config_raw):
+        self.original_config = config_raw.copy()
+
+    # def _on_confirm(self):
+    #     updated_raw = self.collect_raw_input()
+    #     print(f'原始資料：{self.original_raw}')
+    #     print(f'新增資料{updated_raw}')
+    #
+    #     # 如果是編輯模式，更新原始資料
+    #     if hasattr(self, "original_raw") and self.original_raw:
+    #         data_manager.update_raw(self.original_raw, updated_raw)
+    #     else:
+    #         # 如果是新增模式，直接儲存
+    #         data_manager.save_raw_input(updated_raw)
+    #
+    #     self.accept()
+
+    # def collect_raw_input(self) -> dict:
+    #     return {
+    #         "event_name": self.event_name_input.text().strip(),
+    #         "duration": self.duration_input.value(),
+    #         "limit_time": self.limit_time_input.value(),
+    #         "key_labels": [label.text() for label in self.key_labels]
+    #     }
+
+    # def load_raw_input(self, raw: dict):
+    #     self.original_raw = raw.copy()
+    #     self.event_name_input.setText(raw.get("event_name", ""))
+    #     self.duration_input.setValue(raw.get("duration", 10))
+    #     self.limit_time_input.setValue(raw.get("limit_time", 3))
+    #     key_labels = raw.get("key_labels", [])
+    #     for i, label in enumerate(self.key_labels):
+    #         label.setText(key_labels[i] if i < len(key_labels) else "None")
+    #     return self.original_raw
 
 
 # if __name__ == "__main__":

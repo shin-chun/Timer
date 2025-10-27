@@ -1,8 +1,11 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from tkinter import messagebox
-from typing import Optional
+from typing import Optional, List
 import uuid
+
+from PySide6.QtWidgets import QWidget
+from pefile import set_format
 
 
 class KeyState(Enum):
@@ -93,6 +96,18 @@ config_list = [
         sub_active3='c'
     )
 ]
+B = TimerConfig(
+        event_name='覺醒',
+        limit_time=3,
+        duration=25,
+        select='None',
+        lock='None',
+        active='w',
+        sub_active1='e',
+        sub_active2='f',
+        sub_active3='c'
+    )
+
 class TestManager:
     def __init__(self, state: KeyState=KeyState.IDLE):
         self.state = state
@@ -124,11 +139,16 @@ class TestManager:
         return raw_configs
 
 
+
 A = TestManager()
 
-key_input = ['w', 'Key.shift_r','Key.left', 'Key.up', 'Key.ctrl_l' ]
-for k in key_input:
-    A.match_sequence(k)
+for raw in config_list:
+    print(vars(raw))
+
+# print(B)
+# key_input = ['w', 'Key.shift_r','Key.left', 'Key.up', 'Key.ctrl_l' ]
+# for k in key_input:
+#     A.match_sequence(k)
 
 
 # for i, c in enumerate(config):

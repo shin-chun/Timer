@@ -6,70 +6,50 @@ from core.model.timer_factory import TimerConfig
 
 class DataManager:
     def __init__(self):
-        self._raw_inputs: List[Dict] = []
-        self._subscribers: List[Callable[[Dict], None]] = []
+        self.config_list: List[TimerConfig] = []
+        self._subscribers: List[Callable[[TimerConfig], None]] = []
 
+    def save_config_input(self, config_raw):
+        self.config_list.append(config_raw)
+        self._notify_subscribers(config_raw)
+        print(f'設置資料儲存為：{config_raw}')
+        self.remove_config_input(config_raw)
 
-    def save_raw_input(self, raw: Dict):
-        self._raw_inputs.append(raw)
-        print(f'原始資料已儲存：{self._raw_inputs}')
-        self._notify_subscribers(raw)
+    def remove_config_input(self, config_raw):
+        self.config_list = [raw_data for raw_data in self.config_list if raw_data != config_raw]
+        self._notify_subscribers(config_raw)
+        print(f'資料已刪除{config_raw}')
 
-    def remove_raw_input(self, raw: Dict):
-        self._raw_inputs = [r for r in self._raw_inputs if r != raw]
-        self._notify_subscribers(raw)
-        print(f'資料已刪除{self._raw_inputs}')
-
-    def update_raw(self, old: dict, new: dict):
+    def update_raw(self, old: TimerConfig, new: TimerConfig):
         try:
-            index = self._raw_inputs.index(old)
-            self._raw_inputs[index] = new
+            index = self.config_list.index(old)
+            self.config_list[index] = new
             self._notify_subscribers(new)
         except ValueError:
             print("找不到要更新的計時器")
 
-    def get_all_raw_inputs(self) -> List[Dict]:
-        return self._raw_inputs
+    def get_all_confing_inputs(self) -> List[TimerConfig]:
+        return self.config_list
 
-    def subscribe(self, callback: Callable[[Dict], None]):
+    def subscribe(self, callback: Callable[[TimerConfig], None]):
         self._subscribers.append(callback)
 
-    def _notify_subscribers(self, raw: Dict):
+    def _notify_subscribers(self, config_raw):
         for callback in self._subscribers:
-            callback(raw)
+            callback(config_raw)
 
     def save_to_file(self, filepath: str):
         with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump(self._raw_inputs, f, ensure_ascii=False, indent=4)
+            json.dump(self.config_list, f, ensure_ascii=False, indent=4)
 
     def load_from_file(self, filepath: str):
         with open(filepath, 'r', encoding='utf-8') as f:
             raw_data = json.load(f)
-        self._raw_inputs.clear()
+        self.config_list.clear()
         for item in raw_data:
-            self._raw_inputs.append(item)
+            self.config_list.append(item)
             self._notify_subscribers(item)
-        print(f'原始資料已匯入：{self._raw_inputs}')
-
-
-    def get_ui_snapshot(self, raw: Dict) -> Dict:
-        return {
-            "事件名稱": raw.get("event_name", ""),
-            "持續時間": f'{raw.get("duration", 0)} 秒',
-            "限制時間": f'{raw.get("limit_time", 0)} 秒',
-            "鍵位配置": [
-                {"索引": i, "鍵名": key}
-                for i, key in enumerate(raw.get("key_labels", []))
-                if key and key != "None"
-            ]
-        }
-
-    def get_all_configs(self) -> List[TimerConfig]:
-        return [
-            TimerConfig.config_from_dict(raw)
-            for raw in self._raw_inputs
-            if isinstance(raw, dict)
-        ]
+        print(f'原始資料已匯入：{self.config_list}')
 
 # 單例模式（可選）
 
