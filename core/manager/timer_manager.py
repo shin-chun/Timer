@@ -11,29 +11,41 @@ class TimerManager(QObject):
     tick = Signal(TimerConfig)
     def __init__(self, state: KeyState=KeyState.IDLE):
         super().__init__()
+        data_manager.subscribe(self.get_data)
+        self.config_data = []
         self.state = state
         self.id = []
 
-    def match_sequence(self, key):
-        config_list_data = data_manager.get_config_list()
-        for config in config_list_data:
-            if config.select == 'None' and config.lock == 'None':
-                if key == config.active or key == config.sub_active1 or key == config.sub_active2 or key == config.sub_active3:
-                    print(config)
-            elif key == config.select:
-                if self.id:
-                    self.id.clear()
-                    self.state = KeyState.SELECT
-                else:
-                    self.state = KeyState.SELECT
-            elif key == config.lock and self.state == KeyState.SELECT:
-                self.id.append(config.uuid)
-                self.state = KeyState.LOCK
-            elif key == config.active and self.state == KeyState.LOCK:
-                for _ in self.id:
-                    if self.id[0] == config.uuid:
-                        self.id.clear()
-                        print(config)
+    def get_data(self):
+        self.config_data.clear()
+        config_data = data_manager.get_all_config_inputs()
+        result = []
+        for config in config_data:
+            TimerConfig(**config)
+            print(config)
+        print(self.config_data)
+        return result
+
+    # def match_sequence(self, key):
+    #     config_list_data = self.get_data()
+    #     for config in config_list_data:
+    #         if config.select == 'None' and config.lock == 'None':
+    #             if key == config.active or key == config.sub_active1 or key == config.sub_active2 or key == config.sub_active3:
+    #                 print(config)
+    #         elif key == config.select:
+    #             if self.id:
+    #                 self.id.clear()
+    #                 self.state = KeyState.SELECT
+    #             else:
+    #                 self.state = KeyState.SELECT
+    #         elif key == config.lock and self.state == KeyState.SELECT:
+    #             self.id.append(config.uuid)
+    #             self.state = KeyState.LOCK
+    #         elif key == config.active and self.state == KeyState.LOCK:
+    #             for _ in self.id:
+    #                 if self.id[0] == config.uuid:
+    #                     self.id.clear()
+    #                     print(config)
 
 
 # class TimerManager(QObject):

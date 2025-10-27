@@ -5,7 +5,11 @@ from typing import Optional, List
 import uuid
 
 from PySide6.QtWidgets import QWidget
-from pefile import set_format
+
+from core.manager.timer_manager import TimerManager
+
+
+# from pefile import set_format
 
 
 class KeyState(Enum):
@@ -40,6 +44,17 @@ class TimerConfig:
             return False
         return True
 
+    def config_to_dict(self) -> dict:
+        return {
+            'event_name' : self.event_name,
+            'data.duration' : self.duration,
+            'select' : self.select,
+            'lock' : self.lock,
+            'active' : self.active,
+            'sub_active1' : self.sub_active1,
+            'sub_active2' : self.sub_active2,
+            'sub_active3' : self.sub_active3
+        }
 COLOR_MAP= {
     'select' : 'yellow',
     'lock' : 'red',
@@ -140,74 +155,22 @@ class TestManager:
 
 
 
-A = TestManager()
 
-for raw in config_list:
-    print(vars(raw))
+def test(config: List[TimerConfig]):
+    test_manager = TestManager()
+    key_input = ['w', 'Key.shift_r','Key.left', 'Key.up', 'Key.ctrl_l' ]
+    for k in key_input:
+        test_manager.match_sequence(k)
 
-# print(B)
-# key_input = ['w', 'Key.shift_r','Key.left', 'Key.up', 'Key.ctrl_l' ]
-# for k in key_input:
-#     A.match_sequence(k)
+    for i, c in enumerate(config):
+        print(f"[{i}] TimerConfig id: {id(c)}")
+        for k, v in c.__dict__.items():
+            print(f"{k}: {v}")
 
+def test_config(data):
+    print(f'這是測試：{data[0]}')
 
-# for i, c in enumerate(config):
-#     print(f"[{i}] TimerConfig id: {id(c)}")
-#     for k, v in c.__dict__.items():
-#         print(f"{k}: {v}")
+test_config(config_list)
 
-
-# 定義 KeyState 枚舉
-# class KeyState(Enum):
-#     IDLE = 0
-#     SELECT = 1
-#     LOCK = 2
-#     ACTIVE = 3
-#
-#
-# # 定義 KeyGroup 資料類別
-# @dataclass
-# class KeyGroup:
-#     select_key: str
-#     members: Dict[KeyState, str]
-#
-#     def group_to_dict(self):
-#         return {
-#             'select_key': self.select_key,
-#             'members': {state.name: key for state, key in self.members.items()}
-#         }
-#
-#     @classmethod
-#     def group_from_dict(cls, data: dict) -> "KeyGroup":
-#         members_raw = data.get("members", {})
-#         members = {
-#             KeyState[k]: v for k, v in members_raw.items()
-#             if k in KeyState.__members__ and v
-#         }
-#
-#         return cls(
-#             select_key=data.get("select_key", ""),
-#             members=members
-#         )
-#
-#
-# # 建立測試資料
-# group = KeyGroup(
-#     select_key="A",
-#     members={
-#         KeyState.IDLE: "",
-#         KeyState.SELECT: "A",
-#         KeyState.LOCK: "B",
-#         KeyState.ACTIVE: "C"
-#     }
-# )
-#
-# # 呼叫 group_to_dict 並印出結果與類型
-# result = group.group_to_dict()
-# print("輸出資料：", result)
-# print("資料類型：", type(result))
-# print("members 類型：", type(result["members"]))
-# print("members 中的 key 類型：", [type(k) for k in result["members"].keys()])
-# print("members 中的 value 類型：", [type(v) for v in result["members"].values()])
 
 

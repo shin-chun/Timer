@@ -11,16 +11,15 @@ class DataManager:
 
     def save_config_input(self, config_raw):
         self.config_list.append(config_raw)
-        self._notify_subscribers(config_raw)
         print(f'設置資料儲存為：{config_raw}')
-        self.remove_config_input(config_raw)
 
     def remove_config_input(self, config_raw):
         self.config_list = [raw_data for raw_data in self.config_list if raw_data != config_raw]
         self._notify_subscribers(config_raw)
         print(f'資料已刪除{config_raw}')
+        print(self.config_list)
 
-    def update_raw(self, old: TimerConfig, new: TimerConfig):
+    def update_config(self, old: TimerConfig, new: TimerConfig):
         try:
             index = self.config_list.index(old)
             self.config_list[index] = new
@@ -28,7 +27,7 @@ class DataManager:
         except ValueError:
             print("找不到要更新的計時器")
 
-    def get_all_confing_inputs(self) -> List[TimerConfig]:
+    def get_all_config_inputs(self) -> List[TimerConfig]:
         return self.config_list
 
     def subscribe(self, callback: Callable[[TimerConfig], None]):
@@ -44,11 +43,11 @@ class DataManager:
 
     def load_from_file(self, filepath: str):
         with open(filepath, 'r', encoding='utf-8') as f:
-            raw_data = json.load(f)
+            config_list = json.load(f)
         self.config_list.clear()
-        for item in raw_data:
-            self.config_list.append(item)
-            self._notify_subscribers(item)
+        for config in config_list:
+            self.config_list.append(config)
+            self._notify_subscribers(config)
         print(f'原始資料已匯入：{self.config_list}')
 
 # 單例模式（可選）

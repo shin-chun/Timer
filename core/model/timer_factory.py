@@ -38,6 +38,21 @@ class TimerConfig:
             return False
         return True
 
+    def config_to_dict(self, raw_confing_list) -> dict:
+        config_dict = {}
+        for raw in raw_confing_list:
+            raw.event_name = self.event_name
+            raw.duration = self.duration
+            raw.select = self.select
+            raw.lock = self.lock
+            raw.active = self.active
+            raw.sub_active1 = self.sub_active1
+            raw.sub_active2 = self.sub_active2
+            raw.sub_active3 = self.sub_active3
+        return config_dict
+
+
+
 
 
 STATE_COLOR_MAP= {
