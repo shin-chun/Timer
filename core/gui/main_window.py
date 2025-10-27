@@ -22,7 +22,7 @@ from core.hotkey.listen_key import HotkeyListener
 from core.manager.data_manager import data_manager
 from core.gui.edit_window import EditWindow
 from core.manager.timer_manager import TimerManager
-from core.model.timer_factory import KeyState
+from core.model.timer_factory import KeyState, TimerConfig
 
 
 class MainWindow(QMainWindow):
@@ -142,8 +142,8 @@ class MainWindow(QMainWindow):
 
     def open_edit_window(self):
         edit_window = EditWindow(parent=self)
-        if edit_window.exec() == QDialog.accepted:
-            print('我要更新')
+        if edit_window.exec() == QDialog.DialogCode.Accepted:
+            print(TimerConfig.is_valid)
             self.refresh_timer_list()
 
     def edit_timer(self):
@@ -234,6 +234,7 @@ class MainWindow(QMainWindow):
         self.refresh_timer_list()
 
     def refresh_timer_list(self):
+        self.timer_list.clear()
         config_list = data_manager.get_all_config_inputs()
         print(f'這是更新資料：{config_list}')
         for config in config_list:

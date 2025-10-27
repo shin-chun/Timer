@@ -39,15 +39,23 @@ class DataManager:
 
     def save_to_file(self, filepath: str):
         with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump(self.config_list, f, ensure_ascii=False, indent=4)
+            json.dump(
+                [config.to_dict() for config in self.config_list],
+                f,
+                ensure_ascii=False,
+                indent=4
+            )
 
     def load_from_file(self, filepath: str):
         with open(filepath, 'r', encoding='utf-8') as f:
-            config_list = json.load(f)
+            raw_list = json.load(f)
+
         self.config_list.clear()
-        for config in config_list:
+        for raw in raw_list:
+            config = TimerConfig.from_dict(raw)
             self.config_list.append(config)
             self._notify_subscribers(config)
+
         print(f'原始資料已匯入：{self.config_list}')
 
 # 單例模式（可選）
