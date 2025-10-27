@@ -1,87 +1,117 @@
+import uuid
+
 from typing import List, Dict
 
 from PySide6.QtCore import Signal, QObject, QTimer
 
 from core.manager.data_manager import data_manager, DataManager
-from core.model.timer_factory import KeyState, TimerConfig, KeyMap, KeyGroup, KeyMapBuilder
-
+from core.model.timer_factory import KeyState, TimerConfig
 
 class TimerManager(QObject):
     tick = Signal(TimerConfig)
-
-    def __init__(self):
+    def __init__(self, state: KeyState=KeyState.IDLE):
         super().__init__()
-        self._group_cache = {}
-        self.state = KeyState.IDLE
-        self._key_state: Dict[str, KeyState] = {}  # 每個 select_key 的目前狀態
-        print(f"[DEBUG] TimerManager initialized: {id(self)}")
+        self.state = state
+        self.id = []
+
+    def match_sequence(self, key):
+        config_list_data = data_manager.get_config_list()
+        for config in config_list_data:
+            if config.select == 'None' and config.lock == 'None':
+                if key == config.active or key == config.sub_active1 or key == config.sub_active2 or key == config.sub_active3:
+                    print(config)
+            elif key == config.select:
+                if self.id:
+                    self.id.clear()
+                    self.state = KeyState.SELECT
+                else:
+                    self.state = KeyState.SELECT
+            elif key == config.lock and self.state == KeyState.SELECT:
+                self.id.append(config.uuid)
+                self.state = KeyState.LOCK
+            elif key == config.active and self.state == KeyState.LOCK:
+                for _ in self.id:
+                    if self.id[0] == config.uuid:
+                        self.id.clear()
+                        print(config)
 
 
-    def input_key(self, key: str):
-        print(f"🧠 TimerManager 收到鍵：{key}")
-        self.handle_key_press(key)
-
-    def handle_key_press(self, key: str):
-        for config in self.get_data():
-            keymap = config.keymap
-            for group_id, group in keymap.groups.items():
-                if key == group.select_key:
-                    self._key_state[group_id] = KeyState.SELECT
-                    print(f"[{group_id}] 已選擇")
-                elif key == group.members.get(KeyState.LOCK):
-                    if self._key_state.get(group_id) == KeyState.SELECT:
-                        self._key_state[group_id] = KeyState.LOCK
-                        print(f"[{group_id}] 已鎖定")
-                elif key == group.members.get(KeyState.ACTIVE):
-                    current = self._key_state.get(group_id, KeyState.IDLE)
-                    if KeyState.LOCK in group.members:
-                        if current == KeyState.LOCK:
-                            self._start_timer(config)
-                    elif group.select_key:
-                        if current == KeyState.SELECT:
-                            self._start_timer(config)
-                    else:
-                        self._start_timer(config)
-
-
-    def _start_timer(self, config: TimerConfig):
-        self.state = KeyState.IDLE
-        self.tick.emit(config)
-
-    def inject_receiver(self, receiver_callable):
-        self.tick.connect(receiver_callable)
-
-    def on_tick(self):
-        print('tick:已接到')
-
-    def reset_states(self):
-        self._key_state.clear()
-        self.state = KeyState.IDLE
-
-    def load_configs(self):
-        self._configs = self.get_data()
-
-    def get_data(self) -> list[TimerConfig]:
-        raw_configs = data_manager.get_all_raw_inputs()
-        result = []
-        for raw in raw_configs:
-            keymap = KeyMapBuilder.from_key_labels(raw["key_labels"])
-            config = TimerConfig(
-                event_name=raw["event_name"],
-                duration=raw["duration"],
-                limit_time=raw["limit_time"],
-                keymap=keymap
-            )
-            result.append(config)
-        return result
-
-    def start_tick(self):
-        if self.state.name.startswith("ACTIVE") or self.state == KeyState.ACTIVE:
-            self.tick.emit()
-
-    def stop_tick(self):
-        self.state = KeyState.IDLE
-        print("計時器已停止")
+# class TimerManager(QObject):
+#     tick = Signal(TimerConfig)
+#
+#     def __init__(self):
+#         super().__init__()
+#         self._group_cache = {}
+#         self.state = KeyState.IDLE
+#         self._key_state: Dict[str, KeyState] = {}  # 每個 select_key 的目前狀態
+#         print(f"[DEBUG] TimerManager initialized: {id(self)}")
+#
+#
+#     def input_key(self, key: str):
+#         print(f"🧠 TimerManager 收到鍵：{key}")
+#         self.handle_key_press(key)
+#
+#     def handle_key_press(self, key: str):
+#         for config in self.get_data():
+#             keymap = config.keymap
+#             for group_id, group in keymap.groups.items():
+#                 if key == group.select_key:
+#                     self._key_state[group_id] = KeyState.SELECT
+#                     print(f"[{group_id}] 已選擇")
+#                 elif key == group.members.get(KeyState.LOCK):
+#                     if self._key_state.get(group_id) == KeyState.SELECT:
+#                         self._key_state[group_id] = KeyState.LOCK
+#                         print(f"[{group_id}] 已鎖定")
+#                 elif key == group.members.get(KeyState.ACTIVE):
+#                     current = self._key_state.get(group_id, KeyState.IDLE)
+#                     if KeyState.LOCK in group.members:
+#                         if current == KeyState.LOCK:
+#                             self._start_timer(config)
+#                     elif group.select_key:
+#                         if current == KeyState.SELECT:
+#                             self._start_timer(config)
+#                     else:
+#                         self._start_timer(config)
+#
+#
+#     def _start_timer(self, config: TimerConfig):
+#         self.state = KeyState.IDLE
+#         self.tick.emit(config)
+#
+#     def inject_receiver(self, receiver_callable):
+#         self.tick.connect(receiver_callable)
+#
+#     def on_tick(self):
+#         print('tick:已接到')
+#
+#     def reset_states(self):
+#         self._key_state.clear()
+#         self.state = KeyState.IDLE
+#
+#     def load_configs(self):
+#         self._configs = self.get_data()
+#
+#     def get_data(self) -> list[TimerConfig]:
+#         raw_configs = data_manager.get_all_raw_inputs()
+#         result = []
+#         for raw in raw_configs:
+#             keymap = KeyMapBuilder.from_key_labels(raw["key_labels"])
+#             config = TimerConfig(
+#                 event_name=raw["event_name"],
+#                 duration=raw["duration"],
+#                 limit_time=raw["limit_time"],
+#                 keymap=keymap
+#             )
+#             result.append(config)
+#         return result
+#
+#     def start_tick(self):
+#         if self.state.name.startswith("ACTIVE") or self.state == KeyState.ACTIVE:
+#             self.tick.emit()
+#
+#     def stop_tick(self):
+#         self.state = KeyState.IDLE
+#         print("計時器已停止")
 
 
 # def test_timer_activation():
