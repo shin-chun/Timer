@@ -80,12 +80,10 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(central_widget)
         data_manager.subscribe(self.on_timer_updated)
-        self.refresh_timer_list()
+
         self.timer_list.itemDoubleClicked.connect(self.edit_timer)
 
         self.timer_manager = manager
-        # self.timer_manager.load_configs()
-        print(f'window:{id(self.timer_manager)}')
         self.timer_windows = []
 
         self.hotkey_listener = HotkeyListener(self.timer_manager)
@@ -144,7 +142,8 @@ class MainWindow(QMainWindow):
 
     def open_edit_window(self):
         edit_window = EditWindow(parent=self)
-        if edit_window.show() == QDialog.accepted:
+        if edit_window.exec() == QDialog.accepted:
+            print('我要更新')
             self.refresh_timer_list()
 
     def edit_timer(self):
@@ -191,8 +190,6 @@ class MainWindow(QMainWindow):
             data_manager.load_from_file(filepath)
             self.refresh_timer_list()
             print(f"已匯入設定檔：{filepath}")
-            # a = TimerManager()
-            # print(a.get_data())
 
     def handle_timer(self):
         current_text = self.bottom_button.text()
@@ -207,12 +204,10 @@ class MainWindow(QMainWindow):
 
             # ✅ 啟動鍵盤監聽
             self.hotkey_listener.start()
+            config_data = data_manager.get_all_config_inputs()
 
-            configs = self.timer_manager.get_data()
-            print(configs)
-            for config in configs:
-                if not config.is_valid():
-                    continue
+            for config in config_data:
+                print(config)
                 win = TimerWindow(
                     name=config.event_name,
                     cooldown_seconds=config.duration,
@@ -239,24 +234,18 @@ class MainWindow(QMainWindow):
         self.refresh_timer_list()
 
     def refresh_timer_list(self):
-        self.timer_list.clear()
-        for raw in data_manager.get_all_raw_inputs():
-            snapshot = data_manager.get_ui_snapshot(raw)
-            event = snapshot["事件名稱"]
-            duration = snapshot["持續時間"]
-            keys = snapshot["鍵位配置"]
-
-            main_keys = [k["鍵名"] for k in keys[:3]]
-            sub_keys = [k["鍵名"] for k in keys[3:]]
-
+        config_list = data_manager.get_all_config_inputs()
+        print(f'這是更新資料：{config_list}')
+        for config in config_list:
+            print(config)
             text = (
-                f"{event} - {duration} | "
-                f"🔴主鍵位：{' -> '.join(main_keys) if main_keys else '未設定'} | "
-                f"🟡副鍵位：{' - '.join(sub_keys) if sub_keys else '未設定'}"
+                f'{config.event_name} - {config.duration}(限時：{config.limit_time}) | '
+                f'🔴主鍵位：{config.select} -> {config.lock} -> {config.active} | '
+                f'🟡副鍵位：{config.sub_active1} -> {config.sub_active2} -> {config.sub_active3} | '
             )
 
             item = QListWidgetItem(text)
-            item.setData(Qt.ItemDataRole.UserRole, raw)
+            item.setData(Qt.ItemDataRole.UserRole, config)
             self.timer_list.addItem(item)
 
 

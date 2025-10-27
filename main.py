@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     # ✅ 先創建唯一的 TimerManager 實例
     timer_manager = TimerManager()
-    print(f"[DEBUG] 主程式 TimerManager: {id(timer_manager)}")
+
 
     # ✅ 注入到 MainWindow
     main_window = MainWindow(timer_manager)

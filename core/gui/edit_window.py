@@ -28,7 +28,6 @@ class EditWindow(QDialog):
         self.recording_index = None
         self.edit_manager = EditWindowManager(self.update_key_label)
 
-
     def _setup_ui(self):
         main_layout = QVBoxLayout()
 
@@ -166,6 +165,7 @@ class EditWindow(QDialog):
         self.key_labels[index].setText("None")
 
     def _on_confirm(self):
+        print(id(self))
         config_raw = self.collect_config_data()
         data_manager.save_config_input(config_raw)
         self.accept()
