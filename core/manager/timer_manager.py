@@ -4,7 +4,7 @@ from typing import List, Dict
 
 from PySide6.QtCore import Signal, QObject, QTimer
 
-from core.manager.data_manager import data_manager, DataManager
+from core.manager.data_manager import data_manager
 from core.model.timer_factory import KeyState, TimerConfig
 
 class TimerManager(QObject):

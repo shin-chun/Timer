@@ -14,21 +14,12 @@ from core.manager.timer_manager import TimerManager
 
 
 
-# def main():
-#     app = QApplication(sys.argv)
-#     main_window = MainWindow()
-#     main_window.show()
-#     sys.exit(app.exec())
-
-if __name__ == "__main__":
+def main():
     app = QApplication(sys.argv)
-
-    # ✅ 先創建唯一的 TimerManager 實例
     timer_manager = TimerManager()
-
-
-    # ✅ 注入到 MainWindow
     main_window = MainWindow(timer_manager)
     main_window.show()
-
     sys.exit(app.exec())
+
+if __name__ == "__main__":
+    main()

@@ -165,10 +165,10 @@ class EditWindow(QDialog):
         self.key_labels[index].setText("None")
 
     def _on_confirm(self):
-        print(id(self))
-        config_raw = self.collect_config_data()
-        data_manager.save_config_input(config_raw)
-        self.accept()
+        if self.collect_config_data() is not None:
+            config_raw = self.collect_config_data()
+            data_manager.save_config_input(config_raw)
+            self.accept()
 
     def collect_config_data(self):
         config = TimerConfig(

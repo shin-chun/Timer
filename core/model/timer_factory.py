@@ -38,21 +38,34 @@ class TimerConfig:
             return False
         return True
 
-    def config_to_dict(self, raw_confing_list) -> dict:
-        config_dict = {}
-        for raw in raw_confing_list:
-            raw.event_name = self.event_name
-            raw.duration = self.duration
-            raw.select = self.select
-            raw.lock = self.lock
-            raw.active = self.active
-            raw.sub_active1 = self.sub_active1
-            raw.sub_active2 = self.sub_active2
-            raw.sub_active3 = self.sub_active3
-        return config_dict
+    def to_dict(self) -> dict:
+        return {
+            "event_name": self.event_name,
+            "limit_time": self.limit_time,
+            "duration": self.duration,
+            "select": self.select,
+            "lock": self.lock,
+            "active": self.active,
+            "sub_active1": self.sub_active1,
+            "sub_active2": self.sub_active2,
+            "sub_active3": self.sub_active3,
+            "uuid": str(self.uuid)  # UUID 轉成字串
+        }
 
-
-
+    @classmethod
+    def from_dict(cls, data: dict) -> 'TimerConfig':
+        return cls(
+            event_name=data["event_name"],
+            limit_time=data["limit_time"],
+            duration=data["duration"],
+            select=data.get("select"),
+            lock=data.get("lock"),
+            active=data.get("active"),
+            sub_active1=data.get("sub_active1"),
+            sub_active2=data.get("sub_active2"),
+            sub_active3=data.get("sub_active3"),
+            uuid=uuid.UUID(data["uuid"])
+        )
 
 
 STATE_COLOR_MAP= {
