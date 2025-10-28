@@ -36,7 +36,7 @@ class HotkeyListener:
                 self.timer_manager.cooldown_manager.reset_all_cooldowns()
                 return
             key_name = str(key).replace("'", "")  # ✅ 保留 Key.ctrl_l 格式
-            self.timer_manager.input_key(key_name)  # ✅ 傳入原始 pynput key 物件
+            self.timer_manager.match_sequence(key_name)  # ✅ 傳入原始 pynput key 物件
         except Exception as e:
             print(f"❌ 鍵盤監聽錯誤：{e}")
 

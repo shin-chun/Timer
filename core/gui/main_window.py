@@ -230,7 +230,7 @@ class MainWindow(QMainWindow):
 
     def refresh_widget_list(self, config_data_list: List[TimerConfig]):
         self.timer_list.clear()
-        config_list = data_manager.get_config_list()
+        config_list = config_data_list
         print(f'這是更新主視窗表單：{config_list}')
         for config in config_list:
             text = (

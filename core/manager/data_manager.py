@@ -11,7 +11,7 @@ class DataManager:
 
     def save_config_input(self, config_data):
         self.config_list.append(config_data)
-        self._notify_subscribers(config_data)
+        self._notify_subscribers(self.config_list)
         print(f'設置資料儲存為：{self.config_list}')
 
     def remove_config_input(self, config_data):
