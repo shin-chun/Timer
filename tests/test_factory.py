@@ -77,41 +77,41 @@ config_list = [
             sub_active2='None',
             sub_active3='None'
     ),
-    TimerConfig(
-        event_name='餘暉',
-        limit_time= 3,
-        duration=25,
-        select='Key.shift_r',
-        lock='Key.up',
-        active='Key.ctrl_l',
-        sub_active1='Key.alt_l',
-        sub_active2='None',
-        sub_active3='None',
-    ),
-    TimerConfig(
-        event_name='百鬼',
-        limit_time=3,
-        duration=10,
-        select='Key.shift_r',
-        lock='Key.down',
-        active='w',
-        sub_active1='e',
-        sub_active2='f',
-        sub_active3='c'
-    ),
-    TimerConfig(
-        event_name='覺醒',
-        limit_time=3,
-        duration=25,
-        select='None',
-        lock='None',
-        active='w',
-        sub_active1='e',
-        sub_active2='f',
-        sub_active3='c'
-    )
+    # TimerConfig(
+    #     event_name='餘暉',
+    #     limit_time= 3,
+    #     duration=25,
+    #     select='Key.shift_r',
+    #     lock='Key.up',
+    #     active='Key.ctrl_l',
+    #     sub_active1='Key.alt_l',
+    #     sub_active2='None',
+    #     sub_active3='None',
+    # ),
+    # TimerConfig(
+    #     event_name='百鬼',
+    #     limit_time=3,
+    #     duration=10,
+    #     select='Key.shift_r',
+    #     lock='Key.down',
+    #     active='w',
+    #     sub_active1='e',
+    #     sub_active2='f',
+    #     sub_active3='c'
+    # ),
+    # TimerConfig(
+    #     event_name='覺醒',
+    #     limit_time=3,
+    #     duration=25,
+    #     select='None',
+    #     lock='None',
+    #     active='w',
+    #     sub_active1='e',
+    #     sub_active2='f',
+    #     sub_active3='c'
+    # )
 ]
-B = TimerConfig(
+B = [TimerConfig(
         event_name='覺醒',
         limit_time=3,
         duration=25,
@@ -121,7 +121,7 @@ B = TimerConfig(
         sub_active1='e',
         sub_active2='f',
         sub_active3='c'
-    )
+    )]
 
 class TestManager:
     def __init__(self, state: KeyState=KeyState.IDLE):
@@ -170,7 +170,10 @@ def test(config: List[TimerConfig]):
 def test_config(data):
     print(f'這是測試：{data[0]}')
 
-test_config(config_list)
+config_list.extend(B)
+
+print(config_list)
+
 
 
 

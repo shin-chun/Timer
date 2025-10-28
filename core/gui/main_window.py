@@ -1,4 +1,6 @@
 import sys
+from logging import DEBUG
+from typing import List
 
 # 📦 視窗與應用程式
 from PySide6.QtWidgets import (
@@ -79,7 +81,7 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(label)
 
         self.setCentralWidget(central_widget)
-        data_manager.subscribe(self.on_timer_updated)
+        data_manager.subscribe(self.refresh_widget_list)
 
         self.timer_list.itemDoubleClicked.connect(self.edit_timer)
 
@@ -142,9 +144,7 @@ class MainWindow(QMainWindow):
 
     def open_edit_window(self):
         edit_window = EditWindow(parent=self)
-        if edit_window.exec() == QDialog.DialogCode.Accepted:
-            print(TimerConfig.is_valid)
-            self.refresh_timer_list()
+        edit_window.exec()
 
     def edit_timer(self):
         selected_items = self.timer_list.selectedItems()
@@ -158,7 +158,7 @@ class MainWindow(QMainWindow):
         edit_window.load_raw_input(raw)
 
         if edit_window.show() == QDialog.accepted:
-            self.refresh_timer_list()  # 🔄 UI 更新即可
+            self.refresh_widget_list()  # 🔄 UI 更新即可
 
     def save_file(self):
         filepath, _ = QFileDialog.getSaveFileName(self, "儲存設定檔", "timers.json", "JSON Files (*.json)")
@@ -173,13 +173,10 @@ class MainWindow(QMainWindow):
             return
 
         item = selected_items[0]
-        raw = item.data(Qt.ItemDataRole.UserRole)
+        config_data = item.data(Qt.ItemDataRole.UserRole)
 
         # 從 data_manager 移除該計時器
-        data_manager.remove_raw_input(raw)
-
-        # 更新列表
-        self.refresh_timer_list()
+        data_manager.remove_config_input(config_data)
 
     def reset_timer(self):
             print("重置計時器")
@@ -188,7 +185,6 @@ class MainWindow(QMainWindow):
         filepath, _ = QFileDialog.getOpenFileName(self, "匯入設定檔", "", "JSON Files (*.json)")
         if filepath:
             data_manager.load_from_file(filepath)
-            self.refresh_timer_list()
             print(f"已匯入設定檔：{filepath}")
 
     def handle_timer(self):
@@ -230,15 +226,14 @@ class MainWindow(QMainWindow):
                 win.close()
             self.timer_windows.clear()
 
-    def on_timer_updated(self, raw: dict):
-        self.refresh_timer_list()
+    # def on_timer_updated(self, raw: dict):
+    #     self.refresh_widget_list()
 
-    def refresh_timer_list(self):
+    def refresh_widget_list(self, config_data_list: List[TimerConfig]):
         self.timer_list.clear()
-        config_list = data_manager.get_all_config_inputs()
-        print(f'這是更新資料：{config_list}')
+        config_list = data_manager.get_config_list()
+        print(f'這是更新主視窗表單：{config_list}')
         for config in config_list:
-            print(config)
             text = (
                 f'{config.event_name} - {config.duration}(限時：{config.limit_time}) | '
                 f'🔴主鍵位：{config.select} -> {config.lock} -> {config.active} | '

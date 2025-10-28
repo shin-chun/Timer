@@ -16,15 +16,10 @@ class TimerManager(QObject):
         self.state = state
         self.id = []
 
-    def get_data(self):
-        self.config_data.clear()
-        config_data = data_manager.get_all_config_inputs()
-        result = []
-        for config in config_data:
-            TimerConfig(**config)
-            print(config)
-        print(self.config_data)
-        return result
+    def get_data(self, config_data):
+        config_list = data_manager.get_config_list()
+        print(f'這是資料中心傳到計時器管理器：{config_data}')
+        return config_list
 
     # def match_sequence(self, key):
     #     config_list_data = self.get_data()
