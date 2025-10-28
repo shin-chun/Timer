@@ -20,13 +20,11 @@ class TimerManager(QObject):
         self.match_sequence(key)
 
     def get_data(self, config_list: List[TimerConfig]):
-        config_data = config_list
-        print(f'這是資料中心傳到計時器管理器：{config_data}')
-        return config_data
+        self.config_data = config_list
+        print(f'這是資料中心傳到計時器管理器：{self.config_data}')
 
     def match_sequence(self, key):
-        config_list = data_manager.get_config_list()
-        for config in config_list:
+        for config in self.config_data:
             if config.select == 'None' and config.lock == 'None':
                 if key == config.active or key == config.sub_active1 or key == config.sub_active2 or key == config.sub_active3:
                     print(config)
