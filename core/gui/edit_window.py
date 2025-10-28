@@ -166,8 +166,8 @@ class EditWindow(QDialog):
 
     def _on_confirm(self):
         if self.collect_config_data() is not None:
-            config_raw = self.collect_config_data()
-            data_manager.save_config_input(config_raw)
+            config_data = self.collect_config_data()
+            data_manager.save_config_input(config_data)
             self.accept()
 
     def collect_config_data(self):
