@@ -23,6 +23,7 @@ class DataManager:
     def update_config(self, old: TimerConfig, new: TimerConfig):
         try:
             index = self.config_list.index(old)
+            print(index)
             self.config_list[index] = new
             self._notify_subscribers(new)
         except ValueError:

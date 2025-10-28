@@ -152,13 +152,12 @@ class MainWindow(QMainWindow):
             print("請先選擇要編輯的計時器")
             return
         else:
-            raw = selected_items[0].data(Qt.ItemDataRole.UserRole)
+            config_data = selected_items[0].data(Qt.ItemDataRole.UserRole)
+            print(config_data, type(config_data))
 
-        edit_window = EditWindow(parent=self)
-        edit_window.load_raw_input(raw)
-
-        if edit_window.show() == QDialog.accepted:
-            self.refresh_widget_list()  # 🔄 UI 更新即可
+            edit_window = EditWindow(parent=self)
+            edit_window.load_original_config(config_data)
+            edit_window.exec()
 
     def save_file(self):
         filepath, _ = QFileDialog.getSaveFileName(self, "儲存設定檔", "timers.json", "JSON Files (*.json)")
@@ -200,7 +199,7 @@ class MainWindow(QMainWindow):
 
             # ✅ 啟動鍵盤監聽
             self.hotkey_listener.start()
-            config_data = data_manager.get_all_config_inputs()
+            config_data = data_manager.get_config_list()
 
             for config in config_data:
                 print(config)

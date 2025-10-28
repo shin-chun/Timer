@@ -15,7 +15,7 @@ from core.model.timer_factory import TimerConfig
 class EditWindow(QDialog):
     def __init__(self, title='編輯計時器', parent=None):
         super().__init__(parent)
-        self.original_raw = []
+        self.original_config = []
         self.setWindowTitle(title)
         self.setMinimumSize(700, 350)
 
@@ -165,10 +165,14 @@ class EditWindow(QDialog):
         self.key_labels[index].setText("None")
 
     def _on_confirm(self):
-        if self.collect_config_data() is not None:
-            config_data = self.collect_config_data()
-            data_manager.save_config_input(config_data)
-            self.accept()
+        update_config = self.collect_config_data()
+        if hasattr(self, 'original_config') and self.original_config:
+            data_manager.update_config(self.original_config, update_config)
+            self.original_config = None
+        else:
+            data_manager.save_config_input(update_config)
+
+        self.accept()
 
     def collect_config_data(self):
         config = TimerConfig(
@@ -185,9 +189,21 @@ class EditWindow(QDialog):
         if config.is_valid():
             return config
 
-    def load_original_config(self, config_raw):
-        self.original_config = config_raw.copy()
+    def load_original_config(self, config_data:TimerConfig):
+        self.original_config = config_data
+        self.event_name_input.setText(config_data.event_name)
+        self.limit_time_input.setValue(config_data.limit_time)
+        self.duration_input.setValue(config_data.duration)
+        self.key_labels[0].setText(config_data.select)
+        self.key_labels[1].setText(config_data.lock)
+        self.key_labels[2].setText(config_data.active)
+        self.key_labels[3].setText(config_data.sub_active1)
+        self.key_labels[4].setText(config_data.sub_active2)
+        self.key_labels[5].setText(config_data.sub_active3)
+        return self.original_config
 
+
+    #
     # def _on_confirm(self):
     #     updated_raw = self.collect_raw_input()
     #     print(f'原始資料：{self.original_raw}')
