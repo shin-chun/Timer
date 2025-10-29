@@ -17,7 +17,6 @@ class DataManager:
     def remove_config_input(self, config_data):
         self.config_list = [data for data in self.config_list if data != config_data]
         print(f'資料已刪除{config_data}')
-        print(self.config_list)
         self._notify_subscribers(self.config_list)
 
     def update_config(self, old: TimerConfig, new: TimerConfig):

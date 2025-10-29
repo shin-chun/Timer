@@ -1,6 +1,7 @@
 import sys
 import threading
 import time
+import uuid
 from tkinter.constants import ACTIVE
 
 from typing import Dict, List
@@ -16,14 +17,14 @@ from functools import partial
 
 
 class TimerWindow(QWidget):
-    def __init__(self, event_name, duration, timer_manager: TimerManager, state: KeyState=KeyState.IDLE, parent=None):
+    def __init__(self, event_name, duration, uuid_win, timer_manager: TimerManager, state: KeyState=KeyState.IDLE, parent=None):
         super().__init__(parent)
         self.label = QLabel(self)
         self.event_name = event_name
         self.duration = duration
+        self.uuid_win = uuid_win
         self.remaining = duration
         self.state = state
-        self.config_list: List[TimerConfig] = []
 
         self.state_index = 0
 
@@ -53,6 +54,7 @@ class TimerWindow(QWidget):
         self.adjust_width(text)
 
         self.timer = QTimer(self)
+        self.timer.timerId()
         self.timer_manager.tick.connect(self.on_tick)
 
         layout = QVBoxLayout()
@@ -63,6 +65,8 @@ class TimerWindow(QWidget):
         self.config_data = []
         data_manager.subscribe(self.on_timer_updated)
 
+        print(f'{self.event_name}:{self.timer.timerId}->{self.uuid_win}')
+
         # print(f'on_tick:{id(self.on_tick)}  window:{id(self.label)}, timer:{id(self.timer)}, timer_manager:{id(self.timer_manager)}')
 
 
@@ -72,18 +76,19 @@ class TimerWindow(QWidget):
             if config.event_name == self.event_name:
                 self.duration = config.duration
 
-
-    @Slot(TimerConfig)
-    def on_tick(self, config: TimerConfig):
-        if config.event_name != self.event_name:
-            return  # ❌ 不是我要處理的 tick，忽略
-
-        print(f"[DEBUG] {self.event_name} 收到 tick，開始倒數")
-        self.remaining = config.duration  # 或根據 config 設定初始值
-        self.update_label()
-        if not self.timer.isActive():
-            self.timer.timeout.connect(self.update_label)
-            self.timer.start(1000)
+    def on_tick(self, trigger_id: str):
+        if trigger_id == str(self.uuid_win):
+            if self.timer.isActive():
+                print(self.timer.id)
+                print('啟動中，滾')
+                return
+            elif not self.timer.isActive() and self.timer.timerId:
+                print(f"[DEBUG] {self.event_name} 收到 tick，開始倒數")
+                self.remaining = self.duration
+                self.timer.timeout.connect(self.update_label)
+                self.timer.start(1000)
+                print(self.timer.id)
+                return
 
         # try:
         #     if not self.timer.isActive():
@@ -93,21 +98,18 @@ class TimerWindow(QWidget):
         #     print(f"[ERROR] on_tick 發生錯誤：{e}")
 
     def update_label(self):
-        # self.timer.start(1000)
         color = STATE_COLOR_MAP.get(self.state, 'white')
-        if self.remaining > 0 and self.timer.isActive():
-            self.remaining -= 1
-        else:
-            self.timer.stop()
-            if self.timer.isActive():
-                print('tick')
-            else:
-                print('stop')
-
         text = f"{self.event_name}：{self.remaining}s"
         self.label.setText(text)
-        self.label.setStyleSheet(f"background-color: {color}; color: black;")
-        self.adjust_width(text)
+        if self.remaining > 0 and self.timer.isActive():
+            self.remaining -= 1
+            self.label.setText(text)
+            self.adjust_width(text)
+            self.label.setStyleSheet(f"background-color: {color}; color: black;")
+        else:
+            self.timer.stop()
+            print('時間停止')
+            self.label.setText(f'{self.event_name} : {self.duration}s')
 
     def adjust_width(self, text: str):
         font = self.label.font()

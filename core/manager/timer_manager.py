@@ -8,22 +8,23 @@ from core.manager.data_manager import data_manager
 from core.model.timer_factory import KeyState, TimerConfig
 
 class TimerManager(QObject):
-    tick = Signal(TimerConfig)
+    tick = Signal(str)
     def __init__(self, state: KeyState=KeyState.IDLE):
         super().__init__()
         data_manager.subscribe(self.get_data)
-        self.config_data = []
+        self.config_data_list = []
         self.state = state
         self.id = []
 
     def get_data(self, config_list: List[TimerConfig]):
-        self.config_data = config_list
-        print(f'這是資料中心傳到計時器管理器：{self.config_data}')
+        self.config_data_list = config_list
+        print(f'這是資料中心傳到計時器管理器：{self.config_data_list}')
 
     def match_sequence(self, key):
-        for config in self.config_data:
+        for config in self.config_data_list:
             if config.select == 'None' and config.lock == 'None':
                 if key == config.active or key == config.sub_active1 or key == config.sub_active2 or key == config.sub_active3:
+                    self.tick.emit(str(config.uuid))
                     print(config)
             elif key == config.select:
                 if self.id:
@@ -37,9 +38,9 @@ class TimerManager(QObject):
             elif key == config.active or key == config.sub_active1 or key == config.sub_active2 or key == config.sub_active3 and self.state == KeyState.LOCK:
                 for _ in self.id:
                     if self.id[0] == config.uuid:
+                        self.tick.emit(str(config.uuid))
                         self.id.clear()
                         print(config)
-
 
 # class TimerManager(QObject):
 #     tick = Signal(TimerConfig)
