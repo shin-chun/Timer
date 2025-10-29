@@ -189,7 +189,7 @@ class EditWindow(QDialog):
         if config.is_valid():
             return config
 
-    def load_original_config(self, config_data:TimerConfig):
+    def load_original_config(self, config_data: TimerConfig):
         self.original_config = config_data
         self.event_name_input.setText(config_data.event_name)
         self.limit_time_input.setValue(config_data.limit_time)

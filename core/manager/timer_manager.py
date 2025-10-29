@@ -11,13 +11,10 @@ class TimerManager(QObject):
     tick = Signal(TimerConfig)
     def __init__(self, state: KeyState=KeyState.IDLE):
         super().__init__()
-        data_manager.subscribe(self.match_sequence)
+        data_manager.subscribe(self.get_data)
         self.config_data = []
         self.state = state
         self.id = []
-
-    def input_key(self, key: str):
-        self.match_sequence(key)
 
     def get_data(self, config_list: List[TimerConfig]):
         self.config_data = config_list
@@ -37,7 +34,7 @@ class TimerManager(QObject):
             elif key == config.lock and self.state == KeyState.SELECT:
                 self.id.append(config.uuid)
                 self.state = KeyState.LOCK
-            elif key == config.active and self.state == KeyState.LOCK:
+            elif key == config.active or key == config.sub_active1 or key == config.sub_active2 or key == config.sub_active3 and self.state == KeyState.LOCK:
                 for _ in self.id:
                     if self.id[0] == config.uuid:
                         self.id.clear()
