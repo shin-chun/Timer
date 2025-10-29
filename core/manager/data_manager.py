@@ -23,9 +23,8 @@ class DataManager:
     def update_config(self, old: TimerConfig, new: TimerConfig):
         try:
             index = self.config_list.index(old)
-            print(index)
             self.config_list[index] = new
-            self._notify_subscribers(new)
+            self._notify_subscribers(self.config_list)
         except ValueError:
             print("找不到要更新的計時器")
 

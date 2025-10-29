@@ -3,27 +3,28 @@ import threading
 import time
 from tkinter.constants import ACTIVE
 
-from typing import Dict
+from typing import Dict, List
 
 from PySide6.QtCore import Qt, QPoint, QTimer, Slot
 from PySide6.QtGui import QFont, QFontMetrics
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QSizePolicy, QApplication
 
-from core.manager.data_manager import data_manager
+from core.manager.data_manager import data_manager, DataManager
 from core.manager.timer_manager import TimerManager
 from core.model.timer_factory import KeyState, STATE_COLOR_MAP, TimerConfig
 from functools import partial
 
 
 class TimerWindow(QWidget):
-    def __init__(self, name, cooldown_seconds, timer_manager: TimerManager, state: KeyState=KeyState.IDLE, parent=None):
+    def __init__(self, event_name, duration, timer_manager: TimerManager, state: KeyState=KeyState.IDLE, parent=None):
         super().__init__(parent)
         self.label = QLabel(self)
-        self.name = name
-        self.cooldown_seconds = cooldown_seconds
-        self.remaining = cooldown_seconds
+        self.event_name = event_name
+        self.duration = duration
+        self.remaining = duration
         self.state = state
-        self.state_cycle = list(KeyState)
+        self.config_list: List[TimerConfig] = []
+
         self.state_index = 0
 
         self.timer_manager = timer_manager
@@ -32,6 +33,7 @@ class TimerWindow(QWidget):
         # self.cycle_timer = QTimer(self)
         # self.cycle_timer.timeout.connect(self.cycle_state)
         # self.cycle_timer.start(1000)  # 每 1000 毫秒執行一次
+        # self.state_cycle = list(KeyState)
 
         self._dragging = False
         self._drag_offset = QPoint()
@@ -46,7 +48,7 @@ class TimerWindow(QWidget):
         font.setBold(True)
         self.label.setFont(font)
         self.label.setStyleSheet(f'background-color: white;')
-        text = f"{self.name}：{self.remaining}s"
+        text = f"{self.event_name}：{self.remaining}s"
         self.label.setText(text)
         self.adjust_width(text)
 
@@ -57,22 +59,26 @@ class TimerWindow(QWidget):
         layout.addWidget(self.label)
         self.setLayout(layout)
         self.setFixedHeight(50)
+
+        self.config_data = []
         data_manager.subscribe(self.on_timer_updated)
+
         # print(f'on_tick:{id(self.on_tick)}  window:{id(self.label)}, timer:{id(self.timer)}, timer_manager:{id(self.timer_manager)}')
 
 
-    def on_timer_updated(self, raw: Dict):
-        if raw.get("event_name") == self.name:
-            self.cooldown_seconds = raw.get("duration", self.cooldown_seconds)
-            self.remaining = self.cooldown_seconds
-            self.update_label()
+    def on_timer_updated(self, config_list: List[TimerConfig]):
+        print(f'config_list: {config_list}')
+        for config in config_list:
+            if config.event_name == self.event_name:
+                self.duration = config.duration
+
 
     @Slot(TimerConfig)
     def on_tick(self, config: TimerConfig):
-        if config.event_name != self.name:
+        if config.event_name != self.event_name:
             return  # ❌ 不是我要處理的 tick，忽略
 
-        print(f"[DEBUG] {self.name} 收到 tick，開始倒數")
+        print(f"[DEBUG] {self.event_name} 收到 tick，開始倒數")
         self.remaining = config.duration  # 或根據 config 設定初始值
         self.update_label()
         if not self.timer.isActive():
@@ -98,7 +104,7 @@ class TimerWindow(QWidget):
             else:
                 print('stop')
 
-        text = f"{self.name}：{self.remaining}s"
+        text = f"{self.event_name}：{self.remaining}s"
         self.label.setText(text)
         self.label.setStyleSheet(f"background-color: {color}; color: black;")
         self.adjust_width(text)

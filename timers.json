@@ -1,2 +1,50 @@
 [
-    
+    {
+        "event_name": "影子",
+        "limit_time": 3,
+        "duration": 60,
+        "select": "Key.shift_r",
+        "lock": "Key.left",
+        "active": "Key.ctrl_l",
+        "sub_active1": "Key.alt_l",
+        "sub_active2": "None",
+        "sub_active3": "None",
+        "uuid": "80fe4e34-7c81-46b0-9072-ca358216641c"
+    },
+    {
+        "event_name": "百鬼",
+        "limit_time": 3,
+        "duration": 25,
+        "select": "Key.shift_r",
+        "lock": "Key.down",
+        "active": "w",
+        "sub_active1": "e",
+        "sub_active2": "f",
+        "sub_active3": "v",
+        "uuid": "a9fe8935-553e-4a79-b4aa-aa62eb341ec1"
+    },
+    {
+        "event_name": "餘暉",
+        "limit_time": 3,
+        "duration": 30,
+        "select": "Key.shift_r",
+        "lock": "Key.up",
+        "active": "Key.ctrl_l",
+        "sub_active1": "Key.alt_l",
+        "sub_active2": "None",
+        "sub_active3": "None",
+        "uuid": "21dd670d-47a2-4d87-86a0-25f0ae0343eb"
+    },
+    {
+        "event_name": "lithia",
+        "limit_time": 3,
+        "duration": 15,
+        "select": "None",
+        "lock": "None",
+        "active": "Key.ctrl_l",
+        "sub_active1": "Key.alt_l",
+        "sub_active2": "None",
+        "sub_active3": "None",
+        "uuid": "23345c18-f3d9-4921-b7d3-ae06249f5ee5"
+    }
+]

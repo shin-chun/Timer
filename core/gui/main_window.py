@@ -204,8 +204,8 @@ class MainWindow(QMainWindow):
             for config in config_data:
                 print(config)
                 win = TimerWindow(
-                    name=config.event_name,
-                    cooldown_seconds=config.duration,
+                    event_name=config.event_name,
+                    duration=config.duration,
                     timer_manager=self.timer_manager,
                     state=KeyState.IDLE
                 )
@@ -224,9 +224,6 @@ class MainWindow(QMainWindow):
             for win in self.timer_windows:
                 win.close()
             self.timer_windows.clear()
-
-    # def on_timer_updated(self, raw: dict):
-    #     self.refresh_widget_list()
 
     def refresh_widget_list(self, config_data_list: List[TimerConfig]):
         self.timer_list.clear()
