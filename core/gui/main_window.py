@@ -202,12 +202,12 @@ class MainWindow(QMainWindow):
             config_data = data_manager.get_config_list()
 
             for config in config_data:
-                print(config)
                 win = TimerWindow(
                     event_name=config.event_name,
                     duration=config.duration,
                     timer_manager=self.timer_manager,
-                    state=KeyState.IDLE
+                    state=KeyState.IDLE,
+                    uuid_win=config.uuid
                 )
                 win.set_state(KeyState.IDLE)  # ✅ 顯示初始狀態但不啟動
                 win.show()
