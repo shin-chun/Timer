@@ -24,7 +24,7 @@ class TimerManager(QObject):
         for config in self.config_data_list:
             if config.select == 'None' and config.lock == 'None':
                 if key == config.active or key == config.sub_active1 or key == config.sub_active2 or key == config.sub_active3:
-                    self.tick.emit(str(config.uuid))
+                    self.tick.emit(str(config.uuid), KeyState.ACTIVE)
                     print(config)
             elif key == config.select:
                 if self.id:

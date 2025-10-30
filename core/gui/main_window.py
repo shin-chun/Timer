@@ -209,7 +209,6 @@ class MainWindow(QMainWindow):
                     state=KeyState.IDLE,
                     uuid_win=config.uuid
                 )
-                win.set_state(KeyState.IDLE)  # ✅ 顯示初始狀態但不啟動
                 win.show()
                 self.timer_windows.append(win)
 
