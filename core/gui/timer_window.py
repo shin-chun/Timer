@@ -9,6 +9,7 @@ from typing import Dict, List
 from PySide6.QtCore import Qt, QPoint, QTimer, Slot
 from PySide6.QtGui import QFont, QFontMetrics
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QSizePolicy, QApplication
+from playsound import playsound
 
 from core.manager.data_manager import data_manager, DataManager
 from core.manager.timer_manager import TimerManager
@@ -54,8 +55,8 @@ class TimerWindow(QWidget):
         self.adjust_width(text)
 
         self.timer = QTimer(self)
-        self.timer.timerId()
         self.timer_manager.tick.connect(self.on_tick)
+        self.timer.timeout.connect(self.update_label)
 
         layout = QVBoxLayout()
         layout.addWidget(self.label)
@@ -76,19 +77,16 @@ class TimerWindow(QWidget):
             if config.event_name == self.event_name:
                 self.duration = config.duration
 
-    def on_tick(self, trigger_id: str):
-        if trigger_id == str(self.uuid_win):
-            if self.timer.isActive():
-                print(self.timer.id)
-                print('啟動中，滾')
-                return
-            elif not self.timer.isActive() and self.timer.timerId:
-                print(f"[DEBUG] {self.event_name} 收到 tick，開始倒數")
-                self.remaining = self.duration
-                self.timer.timeout.connect(self.update_label)
-                self.timer.start(1000)
-                print(self.timer.id)
-                return
+    def on_tick(self, trigger_id: str, state: KeyState):
+        if trigger_id != str(self.uuid_win):
+            return
+        elif self.timer.isActive():
+            print('啟動中，滾')
+            return
+        elif trigger_id == str(self.uuid_win) and not self.timer.isActive():
+            self.remaining = self.duration
+            self.timer.start(1000)
+            return
 
         # try:
         #     if not self.timer.isActive():
@@ -97,10 +95,9 @@ class TimerWindow(QWidget):
         # except Exception as e:
         #     print(f"[ERROR] on_tick 發生錯誤：{e}")
 
-    def update_label(self):
+    def update_label(self, state: KeyState):
         color = STATE_COLOR_MAP.get(self.state, 'white')
         text = f"{self.event_name}：{self.remaining}s"
-        self.label.setText(text)
         if self.remaining > 0 and self.timer.isActive():
             self.remaining -= 1
             self.label.setText(text)
@@ -108,8 +105,14 @@ class TimerWindow(QWidget):
             self.label.setStyleSheet(f"background-color: {color}; color: black;")
         else:
             self.timer.stop()
-            print('時間停止')
             self.label.setText(f'{self.event_name} : {self.duration}s')
+            threading.Thread(target=self._play_sound, daemon=True).start()
+
+    def _play_sound(self):
+        try:
+            playsound("assets/sound/cooldown_complete.mp3")
+        except Exception as e:
+            print(f"❌ 播放音效失敗：{e}")
 
     def adjust_width(self, text: str):
         font = self.label.font()
@@ -137,9 +140,6 @@ class TimerWindow(QWidget):
             self._dragging = False
             event.accept()
 
-    def set_state(self, state: KeyState):
-        self.state = state
-        self.update_label()
 
 
     # def cycle_state(self):
