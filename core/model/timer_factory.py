@@ -3,7 +3,7 @@ import uuid
 
 from dataclasses import dataclass, field
 from tkinter import messagebox
-from typing import Optional, Dict
+from typing import Optional
 from enum import Enum
 
 class KeyState(Enum):
@@ -11,6 +11,7 @@ class KeyState(Enum):
     SELECT = 1
     LOCK = 2
     ACTIVE = 3
+    FINISHED = 4
 
 
 @dataclass
@@ -69,14 +70,14 @@ class TimerConfig:
 
 
 STATE_COLOR_MAP= {
-    'select' : 'yellow',
-    'lock' : 'red',
-    'active' : 'gray',
-    'sub_active1' : 'gray',
-    'sub_active2' : 'gray',
-    'sub_active3' : 'gray',
-    'default' : 'white'
+    KeyState.SELECT : 'yellow',
+    KeyState.LOCK : 'red',
+    KeyState.ACTIVE : 'gray',
+    KeyState.FINISHED : 'green',
+    KeyState.IDLE : 'white'
 }
+
+print(KeyState.IDLE, type(KeyState.IDLE))
 
 # class KeyState(Enum):
 #     IDLE = 0

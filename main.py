@@ -1,16 +1,13 @@
 # main.py
-
 import sys
+
 from PySide6.QtWidgets import QApplication
+
 from core.gui.main_window import MainWindow
-from core.gui.timer_window import TimerWindow
-# from core.manager.tick_manager import TickManager
 from core.manager.timer_manager import TimerManager
+from core.utils.resource import resource_path
 
 
-# from manager.main_window_manager import MainWindowManager
-# from hotkey.listen_key import hotkeylistener
-# from manager.data_manager import DataManager
 
 
 
