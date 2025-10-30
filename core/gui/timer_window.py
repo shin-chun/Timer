@@ -57,15 +57,15 @@ class TimerWindow(QWidget):
         self.setLayout(layout)
         self.setFixedHeight(50)
 
+        self.config_data_list = []
+
         data_manager.subscribe(self.on_timer_updated)
 
         self.restore_position()
 
-    def on_timer_updated(self, config_list: List[TimerConfig]):
-        print(f'config_list: {config_list}')
-        for config in config_list:
-            if config.event_name == self.event_name:
-                self.duration = config.duration
+    def on_timer_updated(self, config_data_list: List[TimerConfig]):
+        self.config_data_list = [timer_config for timer_config in config_data_list]
+        print(f'timer_window的資料{self.config_data_list}')
 
     def on_tick(self, trigger_id: str):
         if trigger_id != str(self.uuid_win):
@@ -78,11 +78,9 @@ class TimerWindow(QWidget):
             return
 
     def update_label(self):
-        # color = STATE_COLOR_MAP.get(self.state, 'white')
         text = f"{self.event_name}：{self.remaining}s"
         self.label.setText(text)
         self.adjust_width(text)
-        # self.label.setStyleSheet(f"background-color: {color}; color: black;")
 
         if self.remaining > 0 and self.timer.isActive():
             self.remaining -= 1
@@ -92,7 +90,7 @@ class TimerWindow(QWidget):
             self.label.setText(f'{self.event_name} : {self.duration}s')
             QTimer.singleShot(0, self._play_sound)
 
-    def update_background(self, trigger_id, state: KeyState):
+    def update_background(self, trigger_id: str, state: KeyState):
         color = STATE_COLOR_MAP.get(state, 'white')
         if trigger_id == str(self.uuid_win):
             if not self.timer.isActive():
@@ -103,9 +101,9 @@ class TimerWindow(QWidget):
     def reset_cooldown(self):
         if hasattr(self, "player") and self.player is not None:
             self.player.stop()
-            print("[DEBUG] 音效已停止")
-
-        print(f"[Window] {self.event_name} 重置冷卻時間")
+        #     print("[DEBUG] 音效已停止")
+        #
+        # print(f"[Window] {self.event_name} 重置冷卻時間")
         self.remaining = self.duration
         self.label.setText(f"{self.event_name}：{self.remaining}s")
         self.label.setStyleSheet("background-color: white; color: black;")
@@ -128,7 +126,7 @@ class TimerWindow(QWidget):
             )
 
             self.player.play()
-            print(f"[DEBUG] 播放音效：{sound_path}")
+            # print(f"[DEBUG] 播放音效：{sound_path}")
         except Exception as e:
             print(f"❌ 播放音效失敗：{e}")
 
