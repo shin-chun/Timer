@@ -1,41 +1,32 @@
-import sys
-import threading
-import time
-import uuid
-from tkinter.constants import ACTIVE
+from typing import  List
 
-from typing import Dict, List
-
-from PySide6.QtCore import Qt, QPoint, QTimer, Slot
+from PySide6.QtCore import QSettings
+from PySide6.QtCore import Qt, QPoint, QTimer
 from PySide6.QtGui import QFont, QFontMetrics
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QSizePolicy, QApplication
-from playsound import playsound
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QSizePolicy
 
-from core.manager.data_manager import data_manager, DataManager
+from core.manager.data_manager import data_manager
 from core.manager.timer_manager import TimerManager
 from core.model.timer_factory import KeyState, STATE_COLOR_MAP, TimerConfig
-from functools import partial
+
+from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PySide6.QtCore import QUrl
+from core.utils.resource import resource_path
+
 
 
 class TimerWindow(QWidget):
-    def __init__(self, event_name, duration, uuid_win, timer_manager: TimerManager, state: KeyState=KeyState.IDLE, parent=None):
+    def __init__(self, event_name, duration, uuid_win, timer_manager: TimerManager, parent=None):
         super().__init__(parent)
         self.label = QLabel(self)
         self.event_name = event_name
         self.duration = duration
         self.uuid_win = uuid_win
         self.remaining = duration
-        self.state = state
 
         self.state_index = 0
 
         self.timer_manager = timer_manager
-
-        # 加入 QTimer 每秒切換狀態
-        # self.cycle_timer = QTimer(self)
-        # self.cycle_timer.timeout.connect(self.cycle_state)
-        # self.cycle_timer.start(1000)  # 每 1000 毫秒執行一次
-        # self.state_cycle = list(KeyState)
 
         self._dragging = False
         self._drag_offset = QPoint()
@@ -56,6 +47,9 @@ class TimerWindow(QWidget):
 
         self.timer = QTimer(self)
         self.timer_manager.tick.connect(self.on_tick)
+        self.timer_manager.key_state.connect(self.update_background)
+        self.timer_manager.reset_all.connect(self.reset_cooldown)
+
         self.timer.timeout.connect(self.update_label)
 
         layout = QVBoxLayout()
@@ -63,13 +57,9 @@ class TimerWindow(QWidget):
         self.setLayout(layout)
         self.setFixedHeight(50)
 
-        self.config_data = []
         data_manager.subscribe(self.on_timer_updated)
 
-        print(f'{self.event_name}:{self.timer.timerId}->{self.uuid_win}')
-
-        # print(f'on_tick:{id(self.on_tick)}  window:{id(self.label)}, timer:{id(self.timer)}, timer_manager:{id(self.timer_manager)}')
-
+        self.restore_position()
 
     def on_timer_updated(self, config_list: List[TimerConfig]):
         print(f'config_list: {config_list}')
@@ -77,40 +67,68 @@ class TimerWindow(QWidget):
             if config.event_name == self.event_name:
                 self.duration = config.duration
 
-    def on_tick(self, trigger_id: str, state: KeyState):
+    def on_tick(self, trigger_id: str):
         if trigger_id != str(self.uuid_win):
             return
         elif self.timer.isActive():
-            print('啟動中，滾')
             return
         elif trigger_id == str(self.uuid_win) and not self.timer.isActive():
             self.remaining = self.duration
             self.timer.start(1000)
             return
 
-        # try:
-        #     if not self.timer.isActive():
-        #         self.timer.start(1000)
-        #         self.timer.timeout.connect(self.update_label)
-        # except Exception as e:
-        #     print(f"[ERROR] on_tick 發生錯誤：{e}")
-
-    def update_label(self, state: KeyState):
-        color = STATE_COLOR_MAP.get(self.state, 'white')
+    def update_label(self):
+        # color = STATE_COLOR_MAP.get(self.state, 'white')
         text = f"{self.event_name}：{self.remaining}s"
+        self.label.setText(text)
+        self.adjust_width(text)
+        # self.label.setStyleSheet(f"background-color: {color}; color: black;")
+
         if self.remaining > 0 and self.timer.isActive():
             self.remaining -= 1
-            self.label.setText(text)
-            self.adjust_width(text)
-            self.label.setStyleSheet(f"background-color: {color}; color: black;")
         else:
             self.timer.stop()
+            self.label.setStyleSheet(f"background-color: #90ee90; color: black;")
             self.label.setText(f'{self.event_name} : {self.duration}s')
-            threading.Thread(target=self._play_sound, daemon=True).start()
+            QTimer.singleShot(0, self._play_sound)
+
+    def update_background(self, trigger_id, state: KeyState):
+        color = STATE_COLOR_MAP.get(state, 'white')
+        if trigger_id == str(self.uuid_win):
+            if not self.timer.isActive():
+                self.label.setStyleSheet(f"background-color: {color}; color: black;")
+            else:
+                self.label.setStyleSheet(f"background-color: gray; color: black;")
+
+    def reset_cooldown(self):
+        if hasattr(self, "player") and self.player is not None:
+            self.player.stop()
+            print("[DEBUG] 音效已停止")
+
+        print(f"[Window] {self.event_name} 重置冷卻時間")
+        self.remaining = self.duration
+        self.label.setText(f"{self.event_name}：{self.remaining}s")
+        self.label.setStyleSheet("background-color: white; color: black;")
+        self.timer.stop()
 
     def _play_sound(self):
         try:
-            playsound("assets/sound/cooldown_complete.mp3")
+            sound_path = resource_path("assets/sound/cooldown_complete.mp3")
+
+            # 建立播放器與音效輸出，綁定在 self 上避免被回收
+            self.audio_output = QAudioOutput(self)
+            self.player = QMediaPlayer(self)
+            self.player.setAudioOutput(self.audio_output)
+            self.player.setSource(QUrl.fromLocalFile(sound_path))
+            self.player.setLoops(1)
+
+            # ✅ 加入播放狀態監聽
+            self.player.playbackStateChanged.connect(
+                lambda state: print(f"[DEBUG] 播放狀態變更：{state}")
+            )
+
+            self.player.play()
+            print(f"[DEBUG] 播放音效：{sound_path}")
         except Exception as e:
             print(f"❌ 播放音效失敗：{e}")
 
@@ -122,6 +140,17 @@ class TimerWindow(QWidget):
         total_width = text_width + padding
         self.setFixedWidth(total_width)
         self.label.setFixedWidth(total_width - 20)
+
+    def restore_position(self):
+        settings = QSettings("MyApp", "TimerWindow")
+        pos = settings.value(f"pos_{self.uuid_win}")
+        if pos:
+            self.move(pos)
+
+    def closeEvent(self, event):
+        settings = QSettings("MyApp", "TimerWindow")
+        settings.setValue(f"pos_{self.uuid_win}", self.pos())
+        super().closeEvent(event)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
@@ -146,24 +175,23 @@ class TimerWindow(QWidget):
     #     self.state_index = (self.state_index + 1) % len(self.state_cycle)
     #     self.state = self.state_cycle[self.state_index]
     #     self.update_label()
-
-
+    #
+    #
 
 
 # def simulate_tick(manager: TimerManager):
 #     print("🔔 tick emitted")
 #     manager.tick.emit()
-#
+
 # if __name__ == "__main__":
 #     app = QApplication(sys.argv)
 #
 #     # 建立 manager 與 window
 #     manager = TimerManager()
-#     window = TimerWindow(name="測試事件", cooldown_seconds=10, timer_manager=manager)
+#     window = TimerWindow(event_name="測試事件", duration=10, timer_manager=manager, uuid_win=None)
 #     window.show()
 #
 #     # 啟動 tick 模擬器（非 GUI thread）
-#     threading.Thread(target=simulate_tick, args=(manager,), daemon=True).start()
 #
 #     sys.exit(app.exec())
 

@@ -1,14 +1,14 @@
-import uuid
+from typing import List
 
-from typing import List, Dict
-
-from PySide6.QtCore import Signal, QObject, QTimer
-
+from PySide6.QtCore import Signal, QObject
 from core.manager.data_manager import data_manager
 from core.model.timer_factory import KeyState, TimerConfig
 
 class TimerManager(QObject):
     tick = Signal(str)
+    key_state = Signal(str, KeyState)
+    reset_all = Signal()
+
     def __init__(self, state: KeyState=KeyState.IDLE):
         super().__init__()
         data_manager.subscribe(self.get_data)
@@ -24,23 +24,35 @@ class TimerManager(QObject):
         for config in self.config_data_list:
             if config.select == 'None' and config.lock == 'None':
                 if key == config.active or key == config.sub_active1 or key == config.sub_active2 or key == config.sub_active3:
-                    self.tick.emit(str(config.uuid), KeyState.ACTIVE)
-                    print(config)
+                    self.state = KeyState.ACTIVE
+                    self.tick.emit(str(config.uuid))
+                    self.key_state.emit(str(config.uuid), self.state)
             elif key == config.select:
                 if self.id:
                     self.id.clear()
                     self.state = KeyState.SELECT
+                    self.key_state.emit(str(config.uuid), self.state)
                 else:
                     self.state = KeyState.SELECT
+                    self.key_state.emit(str(config.uuid), self.state)
             elif key == config.lock and self.state == KeyState.SELECT:
                 self.id.append(config.uuid)
                 self.state = KeyState.LOCK
+                self.key_state.emit(str(config.uuid), self.state)
             elif key == config.active or key == config.sub_active1 or key == config.sub_active2 or key == config.sub_active3 and self.state == KeyState.LOCK:
                 for _ in self.id:
                     if self.id[0] == config.uuid:
+                        self.state = KeyState.ACTIVE
                         self.tick.emit(str(config.uuid))
+                        self.key_state.emit(str(config.uuid), self.state)
                         self.id.clear()
                         print(config)
+                    else:
+                        self.state = KeyState.IDLE
+                        self.key_state.emit(str(config.uuid), self.state)
+
+    def reset_all_cooldowns(self):
+        self.reset_all.emit()
 
 # class TimerManager(QObject):
 #     tick = Signal(TimerConfig)

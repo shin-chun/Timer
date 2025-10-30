@@ -33,7 +33,7 @@ class HotkeyListener:
 
             if key == keyboard.Key.f8:
                 print("🔁 偵測到 F8，執行冷卻重置")
-                self.timer_manager.cooldown_manager.reset_all_cooldowns()
+                self.timer_manager.reset_all_cooldowns()
                 return
             key_name = str(key).replace("'", "")  # ✅ 保留 Key.ctrl_l 格式
             self.timer_manager.match_sequence(key_name)  # ✅ 傳入原始 pynput key 物件

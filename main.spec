@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('assets/sound/cooldown_complete.mp3', 'assets/sound')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

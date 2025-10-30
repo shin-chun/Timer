@@ -1,10 +1,9 @@
-import sys
-from logging import DEBUG
+
 from typing import List
 
 # 📦 視窗與應用程式
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QApplication, QDialog
+    QMainWindow, QWidget
 )
 # 📐 Layout 排版
 from PySide6.QtWidgets import (
@@ -24,7 +23,7 @@ from core.hotkey.listen_key import HotkeyListener
 from core.manager.data_manager import data_manager
 from core.gui.edit_window import EditWindow
 from core.manager.timer_manager import TimerManager
-from core.model.timer_factory import KeyState, TimerConfig
+from core.model.timer_factory import TimerConfig
 
 
 class MainWindow(QMainWindow):
@@ -178,7 +177,7 @@ class MainWindow(QMainWindow):
         data_manager.remove_config_input(config_data)
 
     def reset_timer(self):
-            print("重置計時器")
+        self.timer_manager.reset_all_cooldowns()
 
     def import_config(self):
         filepath, _ = QFileDialog.getOpenFileName(self, "匯入設定檔", "", "JSON Files (*.json)")
@@ -206,7 +205,6 @@ class MainWindow(QMainWindow):
                     event_name=config.event_name,
                     duration=config.duration,
                     timer_manager=self.timer_manager,
-                    state=KeyState.IDLE,
                     uuid_win=config.uuid
                 )
                 win.show()
