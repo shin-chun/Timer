@@ -1,3 +1,4 @@
+import uuid
 from typing import  List
 
 from PySide6.QtCore import QSettings
@@ -16,24 +17,27 @@ from core.utils.resource import resource_path
 
 
 class TimerWindow(QWidget):
+    instances = []
+
     def __init__(self, event_name, duration, uuid_win, timer_manager: TimerManager, parent=None):
         super().__init__(parent)
         self.label = QLabel(self)
+        data_manager.subscribe(self.on_timer_updated)
         self.event_name = event_name
         self.duration = duration
-        self.uuid_win = uuid_win
+        self.uuid_win = str(uuid_win)
         self.remaining = duration
+        self.config_data_list = []
+        TimerWindow.instances.append(self.uuid_win)
 
-        self.state_index = 0
-
-        self.timer_manager = timer_manager
-
+        # 窗口拖曳設置
         self._dragging = False
         self._drag_offset = QPoint()
+        self.restore_position()
 
+        # 窗口外觀設置
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-
 
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
@@ -45,44 +49,46 @@ class TimerWindow(QWidget):
         self.label.setText(text)
         self.adjust_width(text)
 
-        self.timer = QTimer(self)
-        self.timer_manager.tick.connect(self.on_tick)
-        self.timer_manager.key_state.connect(self.update_background)
-        self.timer_manager.reset_all.connect(self.reset_cooldown)
-        self.timer_manager.reset_background.connect(self.reset_background)
-
-        self.timer.timeout.connect(self.update_label)
-
         layout = QVBoxLayout()
         layout.addWidget(self.label)
         self.setLayout(layout)
         self.setFixedHeight(50)
 
-        self.config_data_list = []
+        # 外插物件 timer
+        self.timer_manager = timer_manager
+        self.timer = QTimer(self)
+        self.timer_manager.tick.connect(self.on_tick)
+        self.timer_manager.reset_all.connect(self.reset_cooldown)
+        self.timer_manager.reset_background.connect(self.reset_background)
+        self.timer.timeout.connect(self.update_label)
 
-        data_manager.subscribe(self.on_timer_updated)
+        # 外插物件 player
+        self.player = None
 
-        self.restore_position()
+
 
     def on_timer_updated(self, config_data_list: List[TimerConfig]):
         self.config_data_list = [timer_config for timer_config in config_data_list]
         print(f'timer_window的資料{self.config_data_list}')
 
-    def on_tick(self, trigger_id: str):
-        if trigger_id != str(self.uuid_win):
+    #
+    def on_tick(self, trigger_id: str, state: KeyState):
+        if trigger_id == str(self.uuid_win) and not self.timer.isActive():
+            self.update_background(trigger_id, state)
+            if state == KeyState.LOCK:
+                self.update_background(trigger_id, state)
+            elif state == KeyState.ACTIVE:
+                self.update_background(trigger_id, state)
+                self.remaining = self.duration
+                self.timer.start(1000)
             return
         elif self.timer.isActive():
-            return
-        elif trigger_id == str(self.uuid_win) and not self.timer.isActive():
-            self.remaining = self.duration
-            self.timer.start(1000)
             return
 
     def update_label(self):
         text = f"{self.event_name}：{self.remaining}s"
         self.label.setText(text)
         self.adjust_width(text)
-
 
         if self.remaining > 0 and self.timer.isActive():
             self.remaining -= 1
@@ -100,9 +106,9 @@ class TimerWindow(QWidget):
             else:
                 self.label.setStyleSheet(f"background-color: gray; color: black;")
 
-    def reset_background(self, trigger_id: str):
-        if not self.timer.isActive():
-            self.label.setStyleSheet(f"background-color: white; color: black;")
+    def reset_background(self, win_id):
+        if win_id == str(self.uuid_win) and not self.timer.isActive():
+            self.label.setStyleSheet(f"background-color: white;")
 
     def reset_cooldown(self):
         if hasattr(self, "player") and self.player is not None:
@@ -127,9 +133,9 @@ class TimerWindow(QWidget):
             self.player.setLoops(1)
 
             # ✅ 加入播放狀態監聽
-            self.player.playbackStateChanged.connect(
-                lambda state: print(f"[DEBUG] 播放狀態變更：{state}")
-            )
+            # self.player.playbackStateChanged.connect(
+            #     lambda state: print(f"[DEBUG] 播放狀態變更：{state}")
+            # )
 
             self.player.play()
             # print(f"[DEBUG] 播放音效：{sound_path}")

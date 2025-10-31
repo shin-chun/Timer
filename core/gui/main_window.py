@@ -209,7 +209,6 @@ class MainWindow(QMainWindow):
                 )
                 win.show()
                 self.timer_windows.append(win)
-
         else:
             self.bottom_button.setText("啟動計時器")
             self.label.setText("計時器已停止")
