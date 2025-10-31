@@ -8,6 +8,7 @@ class TimerManager(QObject):
     tick = Signal(str)
     key_state = Signal(str, KeyState)
     reset_all = Signal()
+    reset_background = Signal(str)
 
     def __init__(self, state: KeyState=KeyState.IDLE):
         super().__init__()
@@ -52,6 +53,7 @@ class TimerManager(QObject):
                 self.id.clear()
                 self.tick.emit(str(config.uuid))
                 self.key_state.emit(str(config.uuid), KeyState.ACTIVE)
+                self.reset_background.emit(str(config.uuid))
 
     def reset_all_cooldowns(self):
         self.reset_all.emit()

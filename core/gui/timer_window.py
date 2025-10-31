@@ -49,6 +49,7 @@ class TimerWindow(QWidget):
         self.timer_manager.tick.connect(self.on_tick)
         self.timer_manager.key_state.connect(self.update_background)
         self.timer_manager.reset_all.connect(self.reset_cooldown)
+        self.timer_manager.reset_background.connect(self.reset_background)
 
         self.timer.timeout.connect(self.update_label)
 
@@ -82,6 +83,7 @@ class TimerWindow(QWidget):
         self.label.setText(text)
         self.adjust_width(text)
 
+
         if self.remaining > 0 and self.timer.isActive():
             self.remaining -= 1
         else:
@@ -97,6 +99,10 @@ class TimerWindow(QWidget):
                 self.label.setStyleSheet(f"background-color: {color}; color: black;")
             else:
                 self.label.setStyleSheet(f"background-color: gray; color: black;")
+
+    def reset_background(self, trigger_id: str):
+        if not self.timer.isActive():
+            self.label.setStyleSheet(f"background-color: white; color: black;")
 
     def reset_cooldown(self):
         if hasattr(self, "player") and self.player is not None:

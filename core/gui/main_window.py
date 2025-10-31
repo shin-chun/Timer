@@ -216,6 +216,7 @@ class MainWindow(QMainWindow):
 
             # ✅ 停止鍵盤監聽
             self.hotkey_listener.stop()
+            self.timer_manager.reset_all_cooldowns()
 
             # 🛑 關閉所有視窗
             for win in self.timer_windows:
@@ -237,6 +238,11 @@ class MainWindow(QMainWindow):
             item.setData(Qt.ItemDataRole.UserRole, config)
             self.timer_list.addItem(item)
 
+    def closeEvent(self, event):
+        if self.timer_windows:
+            for win in self.timer_windows:
+                win.close()
+        event.accept()
 
 
 # if __name__ == "__main__":
