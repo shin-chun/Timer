@@ -1,3 +1,4 @@
+from collections import deque
 from typing import List
 
 from PySide6.QtCore import Signal, QObject
@@ -15,6 +16,7 @@ class TimerManager(QObject):
         data_manager.subscribe(self.get_data)
         self.config_data_list = []
         self.state = state
+        self.select_list = deque(maxlen=3)
         self.id = []
 
     def get_data(self, config_list: List[TimerConfig]):
@@ -22,17 +24,24 @@ class TimerManager(QObject):
         print(f'這是資料中心傳到計時器管理器：{self.config_data_list}')
 
     def match_sequence(self, key):
+        index = 0
         for config in self.config_data_list:
             if config.select == 'None' and config.lock == 'None':
                 self.check_only_active(key, config)
             elif key == config.select:
+                self.select_list.append(config)
                 self.check_select_key(config)
             elif key != config.lock and self.state == KeyState.SELECT:
-                self.reset_background.emit(str(config.uuid))
+                index += 1
+                if index == len(self.select_list):
+                    self.reset_background.emit('clear')
+                    self.state = KeyState.IDLE
+                    index = 0
             elif key == config.lock and self.state == KeyState.SELECT:
                 self.check_lock_key(config)
             elif self.state == KeyState.LOCK:
                 self.check_active_key(key, config)
+
 
     def check_only_active(self, key, config: TimerConfig):
         if key == config.active or key == config.sub_active1 or key == config.sub_active2 or key == config.sub_active3:

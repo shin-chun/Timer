@@ -109,13 +109,14 @@ class TimerWindow(QWidget):
     def reset_background(self, win_id):
         if win_id == str(self.uuid_win) and not self.timer.isActive():
             self.label.setStyleSheet(f"background-color: white;")
+        elif win_id == 'clear':
+            if not self.timer.isActive():
+                self.label.setStyleSheet(f"background-color: white;")
 
     def reset_cooldown(self):
         if hasattr(self, "player") and self.player is not None:
             self.player.stop()
-        #     print("[DEBUG] 音效已停止")
-        #
-        # print(f"[Window] {self.event_name} 重置冷卻時間")
+
         self.remaining = self.duration
         self.label.setText(f"{self.event_name}：{self.remaining}s")
         self.label.setStyleSheet("background-color: white; color: black;")
