@@ -10,18 +10,20 @@ class TimerManager(QObject):
     reset_background = Signal(str)
     reset_all = Signal()
 
-
-    def __init__(self, state: KeyState=KeyState.IDLE):
+    def __init__(self):
         super().__init__()
         data_manager.subscribe(self.get_data)
         self.config_data_list = []
-        self.state = state
-        self.select_list = deque(maxlen=3)
+        self.state = KeyState.IDLE
+        self.select_set = set()
+        self.select_count = 0
         self.id = []
+        print(f'初始化ID：{id(self.state)}')
 
     def get_data(self, config_list: List[TimerConfig]):
         self.config_data_list = config_list
         print(f'這是資料中心傳到計時器管理器：{self.config_data_list}')
+        print(len(self.config_data_list))
 
     def match_sequence(self, key):
         index = 0
@@ -29,18 +31,24 @@ class TimerManager(QObject):
             if config.select == 'None' and config.lock == 'None':
                 self.check_only_active(key, config)
             elif key == config.select:
-                self.select_list.append(config)
                 self.check_select_key(config)
+                self.select_set.add(config.uuid)
+                print(f'這裡要IDLE->{config.event_name} : {self.state}, {id(self.state)}')
             elif key != config.lock and self.state == KeyState.SELECT:
                 index += 1
-                if index == len(self.select_list):
+                if index == len(self.select_set):
                     self.reset_background.emit('clear')
                     self.state = KeyState.IDLE
-                    index = 0
+                    self.select_set.clear()
+                    print(f'這裡要IDLE->{config.event_name} : {self.state}, {id(self.state)}')
             elif key == config.lock and self.state == KeyState.SELECT:
                 self.check_lock_key(config)
+                self.select_set.clear()
+                print(f'{config.event_name} : {self.state}, {id(self.state)}')
             elif self.state == KeyState.LOCK:
                 self.check_active_key(key, config)
+                self.select_set.clear()
+                print(f'{config.event_name} : {self.state}, {id(self.state)}')
 
 
     def check_only_active(self, key, config: TimerConfig):

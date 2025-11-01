@@ -4,15 +4,14 @@ import uuid
 from dataclasses import dataclass, field
 from tkinter import messagebox
 from typing import Optional
-from enum import Enum
+from enum import Enum, auto
 
 class KeyState(Enum):
-    IDLE = 0
-    SELECT = 1
-    LOCK = 2
-    ACTIVE = 3
-    FINISHED = 4
-
+    IDLE = auto()
+    SELECT = auto()
+    LOCK = auto()
+    ACTIVE = auto()
+    FINISHED = auto()
 
 @dataclass
 class TimerConfig:
