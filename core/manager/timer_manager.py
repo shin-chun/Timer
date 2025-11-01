@@ -58,6 +58,8 @@ class TimerManager(QObject):
     def check_select_key(self, config: TimerConfig):
         self.state = KeyState.SELECT
         self.tick.emit(str(config.uuid), KeyState.SELECT)
+        if self.id:
+            self.id.clear()
 
     def check_lock_key(self, config: TimerConfig):
         self.id.append(config.uuid)
